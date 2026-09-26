@@ -1,0 +1,2 @@
+import { Text, View } from 'react-native'; import styles from './styles';
+export default function PageHeader({ eyebrow, title, description, right }) { return <View style={styles.wrap}><View style={styles.copy}>{eyebrow?<Text style={styles.eyebrow}>{eyebrow}</Text>:null}<Text style={styles.title}>{title}</Text>{description?<Text style={styles.description}>{description}</Text>:null}</View>{right}</View>; }

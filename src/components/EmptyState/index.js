@@ -1,0 +1,2 @@
+import { Ionicons } from '@expo/vector-icons'; import { Text, View } from 'react-native'; import styles from './styles';
+export default function EmptyState({ title, description, icon='search-outline' }) { return <View style={styles.wrap}><Ionicons name={icon} size={38} color="#0562D2"/><Text style={styles.title}>{title}</Text>{description?<Text style={styles.description}>{description}</Text>:null}</View>; }

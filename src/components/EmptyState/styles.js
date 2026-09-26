@@ -1,0 +1,2 @@
+import { StyleSheet } from 'react-native'; import { colors } from '../../theme/colors'; import { fonts } from '../../theme/typography';
+export default StyleSheet.create({wrap:{padding:28,borderRadius:20,backgroundColor:colors.surfaceSoft,alignItems:'center',gap:8},title:{fontFamily:fonts.title,fontSize:24,textTransform:'uppercase',color:colors.primary,textAlign:'center'},description:{fontFamily:fonts.body,fontSize:14,color:colors.lightGrey,textAlign:'center',lineHeight:20}});

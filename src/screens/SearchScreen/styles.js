@@ -1,0 +1,1 @@
+import { StyleSheet } from 'react-native';import { colors } from '../../theme/colors';export default StyleSheet.create({top:{padding:20,paddingBottom:12,gap:12},row:{flexDirection:'row',gap:10},field:{flex:1},small:{width:105},error:{color:colors.error},list:{paddingHorizontal:20,paddingBottom:30},separator:{height:12}});

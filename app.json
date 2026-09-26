@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "Beyond Compare Intelligence",
+    "slug": "bci-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "bci-mobile",
+    "userInterfaceStyle": "light",
+
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lumen7.bcimobile"
+    },
+
+    "android": {
+      "package": "com.lumen7.bcimobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#00142E"
+      }
+    },
+
+    "plugins": [
+      "expo-secure-store",
+
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O BCI usa sua galeria apenas para selecionar imagens de perfil e anexos de notas."
+        }
+      ],
+
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#00142E",
+          "resizeMode": "contain"
+        }
+      ],
+
+      "expo-font"
+    ]
+  }
+}
