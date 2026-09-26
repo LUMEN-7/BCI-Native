@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "487635748207",
+    "project_id": "primordial-veld-437611-u8",
+    "storage_bucket": "primordial-veld-437611-u8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:487635748207:android:2a778cbb218bfb1fac549a",
+        "android_client_info": {
+          "package_name": "com.lumen7.bcimobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "487635748207-m7cnjtv7v6cf7mob35te3412qbpac7me.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfp3gspnQuqlBynxXQW2rZnCh00rCBC5c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "487635748207-m7cnjtv7v6cf7mob35te3412qbpac7me.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

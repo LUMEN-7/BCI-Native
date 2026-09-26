@@ -9,11 +9,13 @@
 
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.lumen7.bcimobile"
+      "bundleIdentifier": "com.lumen7.bcimobile",
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
 
     "android": {
       "package": "com.lumen7.bcimobile",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#00142E"
       }
