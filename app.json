@@ -32,8 +32,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#00142E",
-          "resizeMode": "contain"
+          "backgroundColor": "#00142E"
         }
       ],
       "expo-font"
