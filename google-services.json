@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "487635748207-8um7jt01kro4a3kq8af6cqphe9fajn1k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.lumen7.bcimobile",
+            "certificate_hash": "badde2c50ed805d98ce402fa29dc5e4f216e9d65"
+          }
+        },
+        {
           "client_id": "487635748207-m7cnjtv7v6cf7mob35te3412qbpac7me.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,6 +37,13 @@
             {
               "client_id": "487635748207-m7cnjtv7v6cf7mob35te3412qbpac7me.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "487635748207-m58pu6itiuc61bbv126ht36t4prshufi.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.lumen7.bcimobile"
+              }
             }
           ]
         }

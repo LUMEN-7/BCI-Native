@@ -6,31 +6,29 @@
     "orientation": "portrait",
     "scheme": "bci-mobile",
     "userInterfaceStyle": "light",
-
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.lumen7.bcimobile",
       "googleServicesFile": "./GoogleService-Info.plist"
     },
-
     "android": {
       "package": "com.lumen7.bcimobile",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#00142E"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
-
     "plugins": [
       "expo-secure-store",
-
       [
         "expo-image-picker",
         {
           "photosPermission": "O BCI usa sua galeria apenas para selecionar imagens de perfil e anexos de notas."
         }
       ],
-
       [
         "expo-splash-screen",
         {
@@ -38,8 +36,12 @@
           "resizeMode": "contain"
         }
       ],
-
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9b5d954c-8df6-4219-bfbe-e3a9dbfb4f54"
+      }
+    }
   }
 }
