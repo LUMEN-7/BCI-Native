@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, Text, View } from 'react-native';
+import { FlatList, View } from 'react-native';
 import Screen from '../../components/Screen';
-import PageHeader from '../../components/PageHeader';
-import FormField from '../../components/FormField';
-import AppButton from '../../components/SearchAction';
 import VehicleCard from '../../components/VehicleCard';
 import LoadingState from '../../components/LoadingState';
 import EmptyState from '../../components/EmptyState';
@@ -19,6 +16,7 @@ import ScheduleModal from './ScheduleModal';
 import ImportVehicleModal from './ImportVehicleModal';
 import { getImportedVehicles, rememberImportedVehicle } from '../../services/importedVehiclesStorage';
 import styles from './styles';
+import SearchHeader from './SearchHeader';
 
 export default function SearchScreen({ navigation }) {
   const { user } = useAuth();
@@ -135,24 +133,12 @@ export default function SearchScreen({ navigation }) {
     catch { setNotice('Veículo salvo no servidor. Não foi possível guardar a ficha adicional neste dispositivo.'); }
   }
 
-  const header = <View style={styles.top}>
-    <PageHeader eyebrow="Pesquisa inteligente" title="PESQUISAR" description="Filtre a base existente ou inicie uma nova busca no motor do BCI."/>
-    <View style={styles.controls}>
-      <FormField label="Modelo ou termo" accessibilityLabel="Pesquisar modelo, marca ou segmento" style={styles.searchInput} value={q} onChangeText={setQ} placeholder="Modelo, marca ou segmento..." returnKeyType="search" onSubmitEditing={remoteSearch}/>
-      <View style={styles.row}><View style={styles.field}><FormField label="Marca" style={styles.input} value={brand} onChangeText={setBrand} placeholder="Digite uma marca"/></View><View style={styles.small}><FormField label="Ano" style={styles.input} value={year} onChangeText={v => setYear(v.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" placeholder="2026"/></View></View>
-      <AppButton title={searching ? 'Pesquisando fontes...' : 'Pesquisar'} icon="search-outline" onPress={remoteSearch} disabled={loading} loading={searching}/>
-      <AppButton title={`Agendar Pesquisa${scheduledCount ? ` (${scheduledCount})` : ''}`} icon="alarm-outline" variant="secondary" onPress={() => setSchedule({ car: null })}/>
-      <AppButton title="Importar" icon="cloud-upload-outline" variant="secondary" onPress={() => setImporting({ car: null })}/>
-    </View>
-    <View style={styles.wrap}>{[[q, setQ, 'Busca'], [brand, setBrand, 'Marca'], [year, setYear, 'Ano']].filter(([value]) => value).map(([value, setter, label]) => <AppButton key={label} title={`${label}: ${value}`} icon="close-outline" compact variant="secondary" onPress={() => setter('')}/>)}</View>
-    {!!(q || brand || year) && <AppButton title="Limpar filtros" icon="refresh-outline" variant="ghost" onPress={() => { setQ(''); setBrand(''); setYear(''); setError(''); }}/>}
-    {!!notice && <Text style={styles.notice} accessibilityLiveRegion="polite">{notice}</Text>}
-    {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
-    {!!error && !searching && <AppButton title="Atualizar dados" variant="ghost" disabled={loading} onPress={() => setReload(v => v + 1)}/>}
-    {!loading && <Text style={styles.count}>{results.length} {results.length === 1 ? 'modelo encontrado' : 'modelos encontrados'}</Text>}
-  </View>;
+  const header = <SearchHeader q={q} setQ={setQ} brand={brand} setBrand={setBrand} year={year} setYear={setYear}
+    searching={searching} loading={loading} onSearch={remoteSearch} scheduledCount={scheduledCount}
+    onSchedule={() => setSchedule({ car: null })} onImport={() => setImporting({ car: null })}
+    resultCount={results.length} error={error} notice={notice} onReload={() => setReload(v => v + 1)}/>;
 
-  return <Screen scroll={false} contentContainerStyle={styles.screenContent}>
+  return <Screen scroll={false} style={styles.screen} contentContainerStyle={styles.screenContent}>
     <FlatList data={loading ? [] : results} keyExtractor={item => item.id} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.list}
       ListHeaderComponent={header} ItemSeparatorComponent={() => <View style={styles.separator}/>}
       ListEmptyComponent={loading ? <LoadingState/> : <EmptyState title="Nenhum modelo encontrado" description="Ajuste os filtros ou inicie uma nova pesquisa."/>}
