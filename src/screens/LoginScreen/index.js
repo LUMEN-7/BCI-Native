@@ -11,6 +11,7 @@ import {
   GoogleOneTapSignIn,
   isCancelledResponse,
   isSuccessResponse,
+  isNoSavedCredentialFoundResponse,
 } from "react-native-nitro-google-signin";
 
 import FormField from "../../components/FormField";
@@ -88,19 +89,17 @@ export default function LoginScreen({ navigation }) {
     setError("");
 
     try {
-      /*
-       * authenticate() já executa o fluxo completo:
-       *
-       * - verifica Google Play Services no Android
-       * - tenta recuperar uma conta já autenticada
-       * - abre o seletor de contas quando necessário
-       * - solicita login explícito se necessário
-       *
-       * Portanto não precisamos mais lidar manualmente
-       * com redirect URI ou expo-auth-session.
-       */
-      const response =
-        await GoogleOneTapSignIn.authenticate();
+      await GoogleOneTapSignIn.checkPlayServices();
+
+      let response = await GoogleOneTapSignIn.signIn();
+
+      if (isNoSavedCredentialFoundResponse(response)) {
+        response = await GoogleOneTapSignIn.createAccount();
+      }
+
+      if (isNoSavedCredentialFoundResponse(response)) {
+        response = await GoogleOneTapSignIn.presentExplicitSignIn();
+      }
 
       if (isCancelledResponse(response)) {
         return;
@@ -120,24 +119,11 @@ export default function LoginScreen({ navigation }) {
         );
       }
 
-      /*
-       * Mantemos exatamente o fluxo que seu backend
-       * já utilizava.
-       *
-       * POST /User/login/google
-       * {
-       *   idToken
-       * }
-       */
-      const result =
-        await loginWithGoogle(idToken);
+      const result = await loginWithGoogle(idToken);
 
       await finish(result);
     } catch (e) {
-      console.error(
-        "Erro Google Sign-In:",
-        e
-      );
+      console.error("Erro Google Sign-In:", e);
 
       setError(
         e?.message ||
