@@ -12,7 +12,7 @@ async function parseError(response) {
   return data?.message || data?.title || data?.error || `Erro ${response.status}`;
 }
 
-export default async function apiFetch(path, options = {}) {
+export async function apiRequest(path, options = {}) {
   const { skip401Redirect = false, ...fetchOptions } = options;
   const token = await getAccessToken();
   const isFormData = typeof FormData !== 'undefined' && fetchOptions.body instanceof FormData;
@@ -30,7 +30,16 @@ export default async function apiFetch(path, options = {}) {
     unauthorizedHandler?.();
     throw new Error('Sessão expirada. Faça login novamente.');
   }
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) {
+    const error = new Error(await parseError(response));
+    error.status = response.status;
+    throw error;
+  }
+  return response;
+}
+
+export default async function apiFetch(path, options = {}) {
+  const response = await apiRequest(path, options);
   if (response.status === 204) return null;
   const text = await response.text();
   return text.trim() ? JSON.parse(text) : null;
