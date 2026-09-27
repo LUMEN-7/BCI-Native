@@ -9,7 +9,7 @@ export default StyleSheet.create({
   content: { paddingHorizontal: 16 },
   container: { width: '100%', maxWidth: 800, alignSelf: 'center', gap: 24 },
   flex: { flex: 1 }, disabled: { opacity: 0.45 },
-  topbar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: 6, borderBottomWidth: 1, borderBottomColor: border, paddingBottom: 18 },
+  topbar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: 4, borderBottomWidth: 1, borderBottomColor: border, paddingBottom: 18 },
   topAction: { flexGrow: 1, flexBasis: 44, alignItems: 'center', gap: 5, maxWidth: 86 },
   circle: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', borderWidth: 1, borderColor: border },
   activeCircle: { backgroundColor: '#EAF2FC', borderColor: '#BFDAFB' },
