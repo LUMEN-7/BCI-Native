@@ -45,6 +45,66 @@ A proposta não é apenas reproduzir as telas do sistema web, mas adaptar seus p
 </a>
 
 ---
+## Demonstração do aplicativo
+
+Abaixo estão as principais telas e fluxos do *BCI Mobile — Beyond Compare Intelligence*.
+
+### Autenticação
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/LUMEN-7/images/main/login.jpeg" width="30%" alt="Tela de login" />
+  <img src="https://raw.githubusercontent.com/LUMEN-7/images/main/cadastro.jpeg" width="30%" alt="Tela de cadastro" />
+  <img src="https://raw.githubusercontent.com/LUMEN-7/images/main/perfil.jpeg" width="30%" alt="Tela de perfil" />
+</p>
+
+<p align="center">
+  <sub>Login • Cadastro • Perfil</sub>
+</p>
+
+---
+
+### Home e navegação
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/LUMEN-7/images/main/home.jpeg" width="30%" alt="Tela inicial" />
+  <img src="https://raw.githubusercontent.com/LUMEN-7/images/main/navbar.jpeg" width="30%" alt="Menu de navegação" />
+  <img src="https://raw.githubusercontent.com/LUMEN-7/images/main/alertas.jpeg" width="30%" alt="Tela de alertas" />
+</p>
+
+<p align="center">
+  <sub>Home • Navegação • Alertas</sub>
+</p>
+
+---
+
+### Pesquisa e catálogo
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/LUMEN-7/images/main/pesquisa.jpeg" width="30%" alt="Pesquisa de veículos" />
+  <img src="https://raw.githubusercontent.com/LUMEN-7/images/main/importar.jpeg" width="30%" alt="Importação de veículos" />
+  <img src="https://raw.githubusercontent.com/LUMEN-7/images/main/agendar.jpeg" width="30%" alt="Agendamento de pesquisa" />
+</p>
+
+<p align="center">
+  <sub>Pesquisa • Importação • Agendamento</sub>
+</p>
+
+---
+
+### Informações do veículo
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/LUMEN-7/images/main/detalhes.jpeg" width="30%" alt="Detalhes do veículo" />
+  <img src="https://raw.githubusercontent.com/LUMEN-7/images/main/infos.jpeg" width="30%" alt="Informações técnicas do veículo" />
+  <img src="https://raw.githubusercontent.com/LUMEN-7/images/main/insights.jpeg" width="30%" alt="Insights do BCI" />
+</p>
+
+<p align="center">
+  <sub>Detalhes • Informações técnicas • Insights</sub>
+</p>
+
+---
+
 ## Principais funcionalidades
 
 ### Pesquisa inteligente
