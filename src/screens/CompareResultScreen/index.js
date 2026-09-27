@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Image, ScrollView, Switch, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Switch, Text, View, useWindowDimensions } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Screen from '../../components/Screen';
-import PageHeader from '../../components/PageHeader';
 import LoadingState from '../../components/LoadingState';
 import { Action, Back, Feedback, Heading, Tabs, s } from '../../components/MobileUI';
 import useRemoteResource from '../../hooks/useRemoteResource';
@@ -14,10 +14,12 @@ import TechnicalSections from '../VehicleDetailScreen/components/TechnicalSectio
 import { getImportedVehicles } from '../../services/importedVehiclesStorage';
 import { useAuth } from '../../context/AuthContext';
 import ExportModal from '../VehicleDetailScreen/components/ExportModal';
+import st from './styles';
 export default function CompareResultScreen({
   route,
   navigation
 }) {
+  const { width: windowWidth } = useWindowDimensions();
   const refs = route.params?.cars;
   const {
     user
@@ -119,19 +121,16 @@ export default function CompareResultScreen({
     };
   }, [data, enrichRevision]);
   const detail = details[Number(selected)];
-  return <Screen><PageHeader eyebrow="Comparação automotiva" title="ALÉM DOS NÚMEROS" description="Analise diferenças, especificações e o parecer da IA." /><Back navigation={navigation} /><Feedback error={resource.error} retry={resource.reload} />
+  const TopAction = ({ icon, label, onPress, active = false }) => <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={({ pressed }) => [st.topIcon, windowWidth <= 600 && st.topIconSmall, active && st.topIconActive, pressed && { opacity: 0.72 }]}><Ionicons name={icon} size={21} color={active ? '#fff' : '#00142E'} /></Pressable>;
+  return <Screen><View style={st.topbar}><Back navigation={navigation} /><View style={st.topActions}><TopAction icon="home-outline" label="Ir para Home" onPress={() => navigation.navigate('Main', { screen: 'Home' })} /><TopAction icon={saved ? 'star' : 'star-outline'} label={saved ? 'Comparação salva' : 'Salvar comparação'} active={saved} onPress={save} /><Pressable accessibilityRole="button" accessibilityLabel="Exportar dados" onPress={() => setExporting(true)} style={({ pressed }) => [st.exportTopAction, windowWidth <= 600 && st.exportTopActionSmall, pressed && { opacity: 0.75 }]}><Ionicons name="download-outline" size={20} color="#00142E" />{windowWidth > 600 && <Text style={st.exportTopLabel}>Exportar dados</Text>}</Pressable></View></View><View style={st.pageHeading}><Text style={[st.pageTitle, { fontSize: windowWidth <= 360 ? 40 : windowWidth <= 600 ? 48 : 52, lineHeight: windowWidth <= 360 ? 38 : 48 }]}>COMPARAÇÃO{ '\n' }DETALHADA</Text><Text style={st.pageDescription}>Visualize diferenças de desempenho, tecnologia e eficiência entre os modelos.</Text></View><Feedback error={resource.error} retry={resource.reload} />
     {resource.loading ? <LoadingState label="Montando comparação..." /> : data && <>
-      <View style={s.wrap}><Action title={saved ? 'Comparação salva' : 'Salvar comparação'} icon="bookmark-outline" loading={saving} disabled={saved} onPress={save} /><Action secondary title="Exportar comparação" icon="download-outline" onPress={() => setExporting(true)} /></View><Feedback error={error} />
-      <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{
-        gap: 14
-      }}>{data.cars.map(c => <View key={c.id} style={[s.panel, {
-          width: 245
-        }]}><Text style={s.eyebrow}>{c.brand}</Text><Text style={s.title}>{c.name}</Text>{c.image && <Image source={{
+      <Feedback error={error} />
+      <View style={st.compareHero}>{data.cars.map((c, index) => <View key={c.id} style={st.heroItem}><View style={st.heroCard}><Text style={st.heroBrand}>{c.brand}</Text>{c.image && <Image source={{
             uri: c.image
           }} style={{
-            height: 145,
+            height: 170,
             width: '100%'
-          }} resizeMode="contain" />}<Text style={s.body}>{c.type}</Text></View>)}</ScrollView>
+          }} resizeMode="contain" />}<Text style={st.heroName}>{c.name}</Text></View>{index < data.cars.length - 1 && <View style={st.vs}><Text style={st.vsText}>VS</Text></View>}</View>)}</View>
       <Heading eyebrow="Dados técnicos" title="LADO A LADO" /><View style={s.row}><Switch accessibilityLabel="Somente diferenças" value={different} onValueChange={setDifferent} trackColor={{
           true: '#0562D2'
         }} /><Text style={s.body}>Somente diferenças</Text></View>
@@ -178,7 +177,7 @@ export default function CompareResultScreen({
       }))} />
       {detail && <TechnicalSections car={detail} openSections={open} onToggle={key => setOpen(v => v.includes(key) ? v.filter(k => k !== key) : [...v, key])} showSources={sources} onSources={setSources} enriching={enriching} enrichmentError={enrichError} onRetry={() => setEnrichRevision(v => v + 1)} />}
       <View style={s.panel}><Heading eyebrow="Análise inteligente" title="PARECER COMPARATIVO" />{aiBusy ? <LoadingState label="Gerando análise da IA..." /> : <><Text style={s.body}>{ai?.summary || data.summary || (data.cars.length > 2 ? 'O parecer da IA está disponível para comparações de dois modelos.' : 'Parecer não disponível.')}</Text>{!!ai?.recommendation && <Text style={s.body}>{ai.recommendation}</Text>}</>}<Feedback error={aiError} retry={() => setRetry(v => v + 1)} /></View>
-      {exporting && detail && <ExportModal title="EXPORTAR COMPARAÇÃO" lineageId={data.details.filter(Boolean).map(c => c.id)} onClose={() => setExporting(false)} />}
+      {exporting && <ExportModal title="EXPORTAR COMPARAÇÃO" lineageId={data.details.filter(Boolean).map(c => c.id)} onClose={() => setExporting(false)} />}
     </>}
   </Screen>;
 }

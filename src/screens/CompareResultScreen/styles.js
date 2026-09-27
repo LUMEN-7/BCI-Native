@@ -1,1 +1,21 @@
-import { StyleSheet } from 'react-native';import { colors } from '../../theme/colors';import { fonts } from '../../theme/typography';export default StyleSheet.create({head:{gap:10,marginBottom:18},kicker:{fontFamily:fonts.bold,fontSize:10,letterSpacing:2,color:colors.secondary},title:{fontFamily:fonts.title,fontSize:34,lineHeight:38,color:colors.primary,textTransform:'uppercase'},table:{minWidth:720},row:{flexDirection:'row',borderBottomWidth:1,borderBottomColor:colors.surfaceSoft,paddingVertical:11},label:{width:150,fontFamily:fonts.bold,fontSize:11,color:colors.lightGrey,textTransform:'uppercase'},cellHead:{width:270,fontFamily:fonts.title,fontSize:18,color:colors.primary,textTransform:'uppercase',paddingRight:12},cell:{width:270,fontFamily:fonts.body,fontSize:14,color:colors.darkGrey,paddingRight:12},body:{fontFamily:fonts.body,fontSize:15,lineHeight:22,color:colors.darkGrey},subhead:{fontFamily:fonts.title,fontSize:21,color:colors.primary,marginTop:8},muted:{fontFamily:fonts.body,color:colors.muted},error:{fontFamily:fonts.body,color:colors.error,marginTop:10}});
+import { StyleSheet } from 'react-native';import { colors } from '../../theme/colors';import { fonts } from '../../theme/typography';export default StyleSheet.create({
+  topbar:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:8,marginBottom:24},
+  topActions:{flexDirection:'row',alignItems:'center',gap:8},
+  topIcon:{width:44,height:44,borderRadius:22,alignItems:'center',justifyContent:'center',backgroundColor:'rgba(0,20,46,0.055)'},
+  topIconSmall:{width:40,height:40,borderRadius:20},
+  topIconActive:{backgroundColor:'#00142E'},
+  exportTopAction:{minHeight:46,paddingHorizontal:16,borderRadius:999,backgroundColor:'rgba(255,255,255,0.92)',flexDirection:'row',alignItems:'center',justifyContent:'center',gap:9,boxShadow:'0px 8px 16px rgba(0,20,46,0.2), 0px 3px 6px rgba(0,20,46,0.12)'},
+  exportTopActionSmall:{width:40,minHeight:40,paddingHorizontal:0},
+  exportTopLabel:{fontFamily:fonts.semibold,fontSize:11,letterSpacing:.8,color:'#00142E',textTransform:'uppercase'},
+  pageHeading:{gap:12,marginBottom:28},
+  pageTitle:{fontFamily:fonts.title,fontSize:52,lineHeight:48,color:'#00142E',textTransform:'uppercase',flexShrink:1},
+  pageDescription:{fontFamily:fonts.body,fontSize:14,lineHeight:23,color:'#646464',maxWidth:620},
+  compareHero:{alignItems:'center',gap:10,marginBottom:28},
+  heroItem:{width:'100%',alignItems:'center',gap:10},
+  heroCard:{width:'100%',maxWidth:400,minHeight:220,padding:22,borderWidth:1,borderColor:'rgba(0,20,46,0.07)',borderRadius:28,backgroundColor:'rgba(255,255,255,0.8)',alignItems:'center',justifyContent:'center',boxShadow:'0px 12px 35px rgba(0,20,46,0.045)'},
+  heroBrand:{position:'absolute',top:20,left:22,fontFamily:fonts.body,fontSize:11,letterSpacing:2.2,color:'#8E99A6',textTransform:'uppercase',alignSelf:'flex-start'},
+  heroName:{fontFamily:fonts.bold,fontSize:15,letterSpacing:.6,textAlign:'center',textTransform:'uppercase',color:'#00142E',marginTop:8},
+  vs:{width:64,height:64,borderRadius:32,backgroundColor:'#00142E',alignItems:'center',justifyContent:'center',boxShadow:'0px 8px 22px rgba(0,20,46,0.15)'},
+  vsText:{fontFamily:fonts.semibold,fontSize:15,letterSpacing:1,color:'#fff'},
+  head:{gap:10,marginBottom:18},kicker:{fontFamily:fonts.bold,fontSize:10,letterSpacing:2,color:colors.secondary},title:{fontFamily:fonts.title,fontSize:34,lineHeight:38,color:colors.primary,textTransform:'uppercase'},table:{minWidth:720},row:{flexDirection:'row',borderBottomWidth:1,borderBottomColor:colors.surfaceSoft,paddingVertical:11},label:{width:150,fontFamily:fonts.bold,fontSize:11,color:colors.lightGrey,textTransform:'uppercase'},cellHead:{width:270,fontFamily:fonts.title,fontSize:18,color:colors.primary,textTransform:'uppercase',paddingRight:12},cell:{width:270,fontFamily:fonts.body,fontSize:14,color:colors.darkGrey,paddingRight:12},body:{fontFamily:fonts.body,fontSize:15,lineHeight:22,color:colors.darkGrey},subhead:{fontFamily:fonts.title,fontSize:21,color:colors.primary,marginTop:8},muted:{fontFamily:fonts.body,color:colors.muted},error:{fontFamily:fonts.body,color:colors.error,marginTop:10}
+});

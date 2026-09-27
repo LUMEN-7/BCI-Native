@@ -45,6 +45,7 @@ export default function GlobalNavbar({
   currentRoute
 }) {
   const insets = useSafeAreaInsets();
+  const showFloatingMenu = currentRoute !== 'VehicleDetail' && currentRoute !== 'CompareResult';
   const [open, setOpen] = useState(false);
   const [hasUnreadAlerts, setHasUnreadAlerts] = useState(false);
   const loadNotifications = useCallback(async () => {
@@ -78,7 +79,7 @@ export default function GlobalNavbar({
     navigation.navigate("Profile");
   }
   return <>
-      <View pointerEvents="box-none" style={[styles.floatingContainer, {
+      {showFloatingMenu && <View pointerEvents="box-none" style={[styles.floatingContainer, {
       top: insets.top + 12
     }]}>
         <Pressable onPress={() => setOpen(current => !current)} style={({
@@ -86,7 +87,7 @@ export default function GlobalNavbar({
       }) => [styles.menuButton, pressed && styles.menuButtonPressed]} accessibilityRole="button" accessibilityLabel={open ? "Fechar menu" : "Abrir menu"}>
           <Ionicons name={open ? "close-outline" : "menu-outline"} size={27} color="#00142E" />
         </Pressable>
-      </View>
+      </View>}
 
       <Modal visible={open} transparent animationType="fade" statusBarTranslucent onRequestClose={() => setOpen(false)}>
         <TouchableWithoutFeedback onPress={() => setOpen(false)}>

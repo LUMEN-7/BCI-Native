@@ -30,7 +30,7 @@ export default function VehicleDetailScreen({ route, navigation }) {
     ]);
   }
   return <View style={styles.screen}>
-    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingHorizontal: width <= 400 ? 12 : 16, paddingTop: insets.top + 82, paddingBottom: insets.bottom + 110 }]}>
+    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingHorizontal: width <= 400 ? 12 : 16, paddingTop: insets.top + 24, paddingBottom: insets.bottom + 110 }]}>
       <View style={styles.container}>
         <DetailTopbar onBack={() => navigation.canGoBack() ? navigation.goBack() : home()} onHome={home}
           onFavorite={detail.toggleFavorite} favorite={detail.favorite} saving={detail.saving} favoritesReady={detail.favoritesReady}
