@@ -65,20 +65,27 @@ const AuthStackNavigator =
  */
 function withGlobalShell(
   ScreenComponent,
-  routeName
+  routeName,
+  rootScreen = false
 ) {
   return function GlobalScreen(props) {
+    const shellNavigation = rootScreen ? {
+      ...props.navigation,
+      navigate: (name, params) => ['Home', 'Search', 'Compare', 'Insights', 'Alerts', 'WorkspaceAccess', 'Saved', 'Notes', 'Profile'].includes(name)
+        ? props.navigation.navigate('Main', { screen: name, params })
+        : props.navigation.navigate(name, params),
+    } : props.navigation;
     return (
       <View style={{ flex: 1 }}>
         <ScreenComponent {...props} />
 
         <GlobalNavbar
-          navigation={props.navigation}
+          navigation={shellNavigation}
           currentRoute={routeName}
         />
 
         <FloatingNotes
-          navigation={props.navigation}
+          navigation={shellNavigation}
         />
       </View>
     );
@@ -94,6 +101,8 @@ const HomeWithNavbar =
     HomeScreen,
     "Home"
   );
+
+const VehicleDetailWithNavbar = withGlobalShell(VehicleDetailScreen, 'VehicleDetail', true);
 
 const SearchWithNavbar =
   withGlobalShell(
@@ -298,10 +307,10 @@ function AppStack() {
       <RootStack.Screen
         name="VehicleDetail"
         component={
-          VehicleDetailScreen
+          VehicleDetailWithNavbar
         }
         options={{
-          title: "Modelo",
+          headerShown: false,
         }}
       />
 

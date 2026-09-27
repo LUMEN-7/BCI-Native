@@ -1,3 +1,57 @@
-import { useEffect,useMemo,useState } from 'react';import { Image,Text,View } from 'react-native';import Screen from '../../components/Screen';import LoadingState from '../../components/LoadingState';import SectionCard from '../../components/SectionCard';import ConfidenceBadge from '../../components/ConfidenceBadge';import AppButton from '../../components/AppButton';import { getCar } from '../../services/carsService';import { analyzeVehicle } from '../../services/aiService';import { addFavorite,getFavoriteIds,getFavorites,removeFavorite } from '../../services/userService';import { adaptCarDetail } from '../../utils/vehicleAdapters';import styles from './styles';
-const LABELS={motor:'Motor',potencia:'Potência',torque:'Torque',transmissao:'Transmissão',tracao:'Tração',cidade:'Consumo cidade',estrada:'Consumo estrada',comprimento:'Comprimento',largura:'Largura',altura:'Altura',entreEixos:'Entre-eixos',categoria:'Categoria'};
-export default function VehicleDetailScreen({route}){const[id]=useState(route.params?.lineageId);const[car,setCar]=useState(null);const[favorite,setFavorite]=useState(false);const[ai,setAi]=useState(null);const[loading,setLoading]=useState(true);const[aiLoading,setAiLoading]=useState(false);const[error,setError]=useState('');useEffect(()=>{(async()=>{try{const[dto,f]=await Promise.all([getCar(id),getFavorites()]);setCar(adaptCarDetail(dto));setFavorite(getFavoriteIds(f).includes(String(id)))}catch(e){setError(e.message)}finally{setLoading(false)}})()},[id]);const entries=useMemo(()=>car?Object.entries(car.fields):[],[car]);async function toggle(){try{favorite?await removeFavorite(id):await addFavorite(id);setFavorite(v=>!v)}catch(e){setError(e.message)}}async function runAi(){if(!car)return;setAiLoading(true);try{setAi(await analyzeVehicle(car.raw))}catch(e){setError(e.message)}finally{setAiLoading(false)}}if(loading)return <LoadingState label="Carregando modelo..."/>;if(!car)return <Screen><Text style={styles.error}>{error||'Modelo não encontrado.'}</Text></Screen>;return <Screen><View style={styles.hero}>{car.image?<Image source={{uri:car.image}} style={styles.image}/>:null}<Text style={styles.brand}>{String(car.brand).toUpperCase()}</Text><Text style={styles.title}>{car.name}</Text><View style={styles.badges}>{car.isFuture?<View style={styles.future}><Text style={styles.futureText}>MODELO FUTURO</Text></View>:null}<ConfidenceBadge confidence={car.averageConfidence}/></View><Text style={styles.description}>{car.description}</Text><AppButton title={favorite?'Remover dos salvos':'Salvar modelo'} variant={favorite?'secondary':'primary'} onPress={toggle}/></View><SectionCard eyebrow="Ficha técnica" title="DADOS E CONFIABILIDADE">{entries.map(([key,field])=><View style={styles.spec} key={key}><View style={styles.specCopy}><Text style={styles.specLabel}>{LABELS[key]||key}</Text><Text style={styles.specValue}>{field.value}</Text>{field.source?<Text style={styles.source}>{field.source}</Text>:null}</View><ConfidenceBadge confidence={field.confidence} conflict={field.conflict} showScore={false}/></View>)}</SectionCard><SectionCard eyebrow="Análise inteligente" title="PARECER DA IA"><View style={styles.aiConfidence}><Text style={styles.aiConfidenceLabel}>CONFIANÇA DOS DADOS USADOS NA ANÁLISE</Text><ConfidenceBadge confidence={car.averageConfidence}/></View>{ai?<View style={styles.ai}><Text style={styles.aiText}>{ai.description}</Text><Text style={styles.aiHeading}>Pontos fortes</Text>{ai.strengths.map(x=><Text key={x} style={styles.aiText}>• {x}</Text>)}<Text style={styles.aiHeading}>Pontos fracos</Text>{ai.weaknesses.map(x=><Text key={x} style={styles.aiText}>• {x}</Text>)}<Text style={styles.aiHeading}>Melhor uso</Text><Text style={styles.aiText}>{ai.bestUse}</Text></View>:<AppButton title="Gerar análise com IA" onPress={runAi} loading={aiLoading}/>}</SectionCard>{error?<Text style={styles.error}>{error}</Text>:null}</Screen>}
+import { useState } from 'react';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import LoadingState from '../../components/LoadingState';
+import Action from '../../components/SearchAction';
+import ImportVehicleModal from '../SearchScreen/ImportVehicleModal';
+import useVehicleDetail from './useVehicleDetail';
+import DetailTopbar from './components/DetailTopbar';
+import VehicleHero from './components/VehicleHero';
+import MainSpecs from './components/MainSpecs';
+import TechnicalSections from './components/TechnicalSections';
+import AiAnalysis from './components/AiAnalysis';
+import ExportModal from './components/ExportModal';
+import styles from './styles';
+
+export default function VehicleDetailScreen({ route, navigation }) {
+  const detail = useVehicleDetail(route, navigation);
+  const insets = useSafeAreaInsets();
+  const [editing, setEditing] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [showSources, setShowSources] = useState(false);
+  const [openSections, setOpenSections] = useState(['base']);
+  const { car } = detail;
+  const home = () => navigation.navigate('Main', { screen: 'Home' });
+  function confirmDelete() {
+    Alert.alert('Excluir ficha importada?', 'A ficha complementar será removida deste usuário neste dispositivo. O veículo continuará no catálogo do servidor e nos favoritos. Esta é a mesma exclusão local da Information web.', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Excluir ficha', style: 'destructive', onPress: detail.deleteImported },
+    ]);
+  }
+  return <View style={styles.screen}>
+    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingTop: insets.top + 82, paddingBottom: insets.bottom + 110 }]}>
+      <View style={styles.container}>
+        <DetailTopbar onBack={() => navigation.canGoBack() ? navigation.goBack() : home()} onHome={home}
+          onFavorite={detail.toggleFavorite} favorite={detail.favorite} saving={detail.saving} favoritesReady={detail.favoritesReady}
+          onExport={() => setExporting(true)} onEdit={() => setEditing(true)} onDelete={confirmDelete}
+          isImported={car?.isImported} ready={!!car} deleting={detail.deleting}/>
+        {detail.loading ? <LoadingState label="Carregando ficha técnica..."/> : detail.notFound || detail.error ? <View style={styles.empty}>
+          <Text accessibilityRole="header" style={styles.sectionTitle}>{detail.notFound ? 'VEÍCULO NÃO ENCONTRADO' : 'FICHA INDISPONÍVEL'}</Text>
+          <Text style={styles.body}>{detail.error || 'Não encontramos uma ficha ativa para este veículo.'}</Text>
+          <Action title="Tentar novamente" onPress={detail.reload}/>
+        </View> : car && <>
+          {!!detail.actionError && <View style={styles.feedback}><Text accessibilityRole="alert" style={styles.error}>{detail.actionError}</Text>{!detail.favoritesReady && <Action title="Recarregar favoritos" variant="secondary" onPress={detail.reload}/>}</View>}
+          <VehicleHero car={car} onCompare={() => navigation.navigate('Main', { screen: 'Compare', params: { firstCar: { id: car.id, name: car.name, brand: car.brand, image: car.image, engine: car.specs.engine.value, power: car.specs.power.value, type: car.specs.type.value, raw: car.raw }, selectionKey: Date.now() } })}/>
+          <Pressable accessibilityRole="switch" accessibilityState={{ checked: showSources }} onPress={() => setShowSources(value => !value)} style={styles.sourceToggle}><Text style={styles.linkLabel}>{showSources ? 'Ocultar fontes dos dados' : 'Mostrar fontes dos dados'}</Text></Pressable>
+          <MainSpecs car={car} showSources={showSources}/>
+          <TechnicalSections car={car} openSections={openSections} onToggle={key => setOpenSections(current => current.includes(key) ? current.filter(item => item !== key) : [...current, key])}
+            showSources={showSources} onSources={setShowSources} enriching={detail.enriching} enrichmentError={detail.enrichmentError} onRetry={detail.enrichMissing}/>
+          <AiAnalysis analysis={detail.analysis} loading={detail.analysisLoading} error={detail.analysisError} isImported={car.isImported} onGenerate={detail.generateAnalysis}/>
+        </>}
+      </View>
+    </ScrollView>
+    {!!detail.notice && <View accessibilityLiveRegion="polite" style={[styles.toast, { top: insets.top + 76 }]}><Text style={styles.toastText}>{detail.notice}</Text></View>}
+    {editing && detail.imported && <ImportVehicleModal initialVehicle={detail.imported} onClose={() => setEditing(false)} onSaved={detail.saveImported}/>}
+    {exporting && car && <ExportModal lineageId={car.id} onClose={() => setExporting(false)}/>}
+  </View>;
+}

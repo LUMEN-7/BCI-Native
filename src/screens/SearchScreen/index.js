@@ -39,6 +39,16 @@ export default function SearchScreen({ navigation }) {
   const favoriteLocks = useRef(new Set());
   const mounted = useRef(true);
 
+  // Detail may edit/remove a personal import or change favorites while Search stays mounted.
+  // Refresh those records on return without restarting the active remote-search job.
+  useEffect(() => navigation.addListener('focus', () => {
+    Promise.all([getImportedVehicles(user), getFavorites()]).then(([local, favorites]) => {
+      if (!mounted.current) return;
+      setCars(current => [...local, ...current.filter(item => !local.some(saved => saved.id === item.id)).map(item => item.isImported ? adaptCarCard(item.raw) : item)]);
+      setFavs(getFavoriteIds(favorites));
+    }).catch(e => { if (mounted.current) setError(e.message); });
+  }), [navigation, user]);
+
   useEffect(() => {
     mounted.current = true;
     async function load() {
