@@ -38,7 +38,13 @@ A proposta não é apenas reproduzir as telas do sistema web, mas adaptar seus p
 > **Compare. Entenda. Antecipe.**
 
 ---
+# VÍDEO DE DEMONSTRAÇÃO
 
+<a href="https://youtu.be/B9b5CAy-Twc">
+  <img src="https://raw.githubusercontent.com/LUMEN-7/images/refs/heads/main/C%C3%B3pia%20de%20FORD%20-%20Apresenta%C3%A7%C3%A3o.jpg" alt="Watch Demo" width="450"/>
+</a>
+
+---
 ## Principais funcionalidades
 
 ### Pesquisa inteligente
