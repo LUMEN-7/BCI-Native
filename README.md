@@ -63,7 +63,7 @@ Preencha:
 
 ```env
 EXPO_PUBLIC_API_BASE_URL=https://apiford.onrender.com
-EXPO_PUBLIC_AI_SERVER_URL=http://10.0.2.2:3001
+EXPO_PUBLIC_AI_SERVER_URL=https://bci-a105.onrender.com
 
 EXPO_PUBLIC_FIREBASE_API_KEY=...
 EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=primordial-veld-437611-u8.firebaseapp.com
@@ -99,17 +99,7 @@ npx expo start --ios
 
 ### 5. Serviço de IA
 
-O BCI web mantém o servidor de IA em `/server/server.js`. Rode-o no projeto web:
-
-```bash
-npm run start:ai
-```
-
-Endereços usuais:
-
-- Android Emulator: `http://10.0.2.2:3001`
-- iOS Simulator: `http://localhost:3001`
-- aparelho físico: use o IP local da máquina, por exemplo `http://192.168.0.10:3001`
+O app usa o servidor hospedado `https://bci-a105.onrender.com`, configurado por `EXPO_PUBLIC_AI_SERVER_URL`. Se a variável não estiver definida, a tela informa `Servidor de IA não configurado.`; não há fallback local. Para testar outro servidor, configure uma URL acessível no ambiente sem adicionar chaves ao app.
 
 ## Google Sign-In
 

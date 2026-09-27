@@ -7,7 +7,7 @@ import styles from '../styles';
 
 export default function VehicleHero({ car, onCompare }) {
   const { width } = useWindowDimensions();
-  const titleSize = Math.min(58, Math.max(42, width * 0.14));
+  const titleSize = Math.min(58, Math.max(34, width * 0.14));
   const [imageError, setImageError] = useState(false);
   useEffect(() => setImageError(false), [car.image]);
   return <View style={styles.hero}>
@@ -20,7 +20,7 @@ export default function VehicleHero({ car, onCompare }) {
     </View>
     <View style={styles.heroCopy}>
       <Text style={styles.eyebrow}>{car.brand || 'MARCA NÃO INFORMADA'}</Text>
-      <Text accessibilityRole="header" style={[styles.heroTitle, { fontSize: titleSize, lineHeight: titleSize * 0.98 }]}>{car.name}</Text>
+      <Text accessibilityRole="header" adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={3} style={[styles.heroTitle, { fontSize: titleSize, lineHeight: titleSize * 0.92 }]}>{car.model || car.name}{car.year ? `\n${car.year}` : ''}</Text>
       <View style={styles.identityRow}>
         {!isMissing(car.specs.type) && <Text style={styles.category}>{car.specs.type.value}</Text>}
       </View>

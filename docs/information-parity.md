@@ -4,20 +4,21 @@ Referência principal: `LUMEN-7/BCI/src/pages/Information` (controller, Topbar, 
 
 ## Comportamento
 
-- Ficha real por linhagem, com DTOs camelCase/PascalCase, loading, erro, 404 e retry.
+- Ficha real por linhagem: `GET /Carro/recente/:linhagemId` é sempre tentado, o DTO/API aparece antes de começar IA e o DTO bruto permanece em `raw` para Compare.
 - Topbar própria: voltar, Home, favorito com loading/toast, exportar e ações do importado.
 - Hero com imagem/placeholder local, marca, modelo, ano, categoria, confiança e badges de importação/modelo futuro.
 - Compare recebe `firstCar` e uma chave de seleção, inclusive se a tela já estiver montada. Mantém o fluxo existente de comparação.
 - Specs principais e dez acordeões, incluindo dados base; estado de abertura preservado enquanto a tela está montada.
-- Fontes provenientes apenas do DTO, resolução de IDs, links HTTP(S), alternativas em conflito e confiança explícita, inclusive zero.
+- Fontes provenientes apenas do DTO, resolução de IDs, links HTTP(S), alternativas em conflito e confiança explícita, inclusive zero. Campos carregados da API levam `origin: api`; complementos locais levam `origin: imported`; IA usa `origin: ai`, `confidence: 0` e `source: null`.
 - Sem confiança presumida para valores simples. A média inclui zero e exclui campos ausentes. Não atribuímos fonte/confiança a estimativas da IA.
-- Enriquecimento automático de ausências para veículos normais, protegendo valores reais; análise automática independente. Importados têm geração manual de análise. Erros/retry separados.
+- Enriquecimento automático somente para campos realmente ausentes em veículos normais, protegendo valores reais; análise automática independente da ficha. Importados têm geração manual de análise. Erros/retry separados.
 - ImportVehicleModal da Search reutilizado. Servidor é prioritário para campos persistidos; ficha local complementa engine, consumo geral, descrição e features não persistidas.
 - Search atualiza favoritos/importados ao recuperar foco sem reiniciar o polling. Saved atualiza ao retornar. GlobalNavbar/FloatingNotes reutilizados pelo shell com navegação para o Main aninhado.
 
 ## Endpoints
 
 - `GET /Carro/recente/:linhagemId`
+- `POST /Pesquisa/busca`, `GET /Pesquisa/jobs/:jobId`, `GET /Carro/listar`
 - `GET /user/modelos`, `POST /user/modelos`, `DELETE /user/modelos/:linhagemId`
 - `POST /Carro/importar-arquivo` (edição pelo modal existente)
 - `POST /Exportacao`: `{ itens: [{ linhagemId }], formato, separador? }`; separador só para CSV. Preserva bytes, MIME e ZIP quando retornado.
@@ -36,7 +37,7 @@ Exportações são gravadas no cache e entregues ao compartilhamento do sistema,
 - Edição reimporta usando o contrato real existente. Alterar identidade pode criar outra linhagem, conforme decisão do backend.
 - Complementos locais não sincronizam entre dispositivos e não integram a exportação produzida pelo servidor; isso aparece no modal.
 - Valores dimensionais mantêm a unidade explícita do DTO. Quando a API retorna apenas um número, não inferimos metros ou milímetros (a importação usa aliases `_mm`, enquanto o web acrescenta `m`).
-- IA exige um servidor acessível configurado; o padrão Android `10.0.2.2:3001` é voltado ao emulador.
+- IA usa `EXPO_PUBLIC_AI_SERVER_URL`; `.env.example` aponta para `https://bci-a105.onrender.com`. Sem configuração, o service lança `Servidor de IA não configurado.` e não usa fallback local.
 - A prévia visual usa componentes React Native Web isolados fora do repositório com dados de avaliação identificados. Não substitui validação nativa nem teste autenticado de ponta a ponta.
 
 ## Verificação

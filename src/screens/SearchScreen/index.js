@@ -83,6 +83,7 @@ export default function SearchScreen({ navigation }) {
   async function trackJob(result) {
     const id = result?.job_id ?? result?.jobId;
     if (!id) throw new Error('O servidor não retornou o identificador da pesquisa.');
+    if (typeof __DEV__ !== 'undefined' && __DEV__) console.log('[BCI Search] jobId', id);
     searchLock.current = true; setSearching(true);
     await setUserScopedJson('search.job', user, id).catch(() => {});
     if (mounted.current) setJobId(id);
@@ -96,7 +97,8 @@ export default function SearchScreen({ navigation }) {
     }
     return watchSearchJob({
       jobId, getStatus: getJobStatus,
-      onComplete: car => { upsert(car); setError(''); finish(); },
+      onStatus: status => { if (typeof __DEV__ !== 'undefined' && __DEV__) console.log('[BCI Search] status', status); },
+      onComplete: car => { if (typeof __DEV__ !== 'undefined' && __DEV__) console.log('[BCI Search] result', { id: car?.linhagemId ?? car?.id, marca: car?.marca, modelo: car?.modelo }); upsert(car); setError(''); finish(); },
       onFailure: () => { setError('A pesquisa não pôde ser concluída. Tente novamente.'); finish(); },
       onConnected: () => setError(''),
       onConnectionError: e => setError(`${e.message} Tentando acompanhar a pesquisa novamente...`),
@@ -124,7 +126,10 @@ export default function SearchScreen({ navigation }) {
     if (!brand.trim()) return setError('Informe ao menos a marca para iniciar uma pesquisa externa.');
     if (year && (!/^\d{4}$/.test(year) || Number(year) < 1950 || Number(year) > 2050)) return setError('Informe um ano entre 1950 e 2050.');
     searchLock.current = true; setSearching(true); setError('');
-    try { await trackJob(await startSearch({ model: q.trim(), brand: brand.trim(), year: year.trim() })); }
+    try {
+      if (typeof __DEV__ !== 'undefined' && __DEV__) console.log('[BCI Search] start', { marca: brand.trim(), modelo: q.trim(), ano: year.trim() });
+      await trackJob(await startSearch({ model: q.trim(), brand: brand.trim(), year: year.trim() }));
+    }
     catch (e) { searchLock.current = false; setSearching(false); setError(e.message); }
   }
 

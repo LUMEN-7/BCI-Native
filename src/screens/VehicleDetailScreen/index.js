@@ -36,13 +36,15 @@ export default function VehicleDetailScreen({ route, navigation }) {
           onFavorite={detail.toggleFavorite} favorite={detail.favorite} saving={detail.saving} favoritesReady={detail.favoritesReady}
           onExport={() => setExporting(true)} onEdit={() => setEditing(true)} onDelete={confirmDelete}
           isImported={car?.isImported} ready={!!car} deleting={detail.deleting}/>
-        {detail.loading ? <LoadingState label="Carregando ficha técnica..."/> : detail.notFound || detail.error ? <View style={styles.empty}>
+        {detail.loading && !car ? <LoadingState label="Carregando ficha técnica..."/> : (detail.notFound || detail.error) && !car ? <View style={styles.empty}>
           <Text accessibilityRole="header" style={styles.sectionTitle}>{detail.notFound ? 'VEÍCULO NÃO ENCONTRADO' : 'FICHA INDISPONÍVEL'}</Text>
           <Text style={styles.body}>{detail.error || 'Não encontramos uma ficha ativa para este veículo.'}</Text>
           <Action title="Tentar novamente" onPress={detail.reload}/>
         </View> : car && <>
+          {!!detail.error && <View style={styles.feedback}><Text accessibilityRole="alert" style={styles.error}>{detail.error}</Text><Action title="Tentar novamente" variant="secondary" onPress={detail.reload}/></View>}
+          {detail.loading && <LoadingState label="Atualizando ficha do veículo..."/>}
           {!!detail.actionError && <View style={styles.feedback}><Text accessibilityRole="alert" style={styles.error}>{detail.actionError}</Text>{!detail.favoritesReady && <Action title="Recarregar favoritos" variant="secondary" onPress={detail.reload}/>}</View>}
-          <VehicleHero car={car} onCompare={() => navigation.navigate('Main', { screen: 'Compare', params: { firstCar: { id: car.id, name: car.name, brand: car.brand, image: car.image, engine: car.specs.engine.value, power: car.specs.power.value, type: car.specs.type.value, raw: car.raw }, selectionKey: Date.now() } })}/>
+          <VehicleHero car={car} onCompare={() => navigation.navigate('Main', { screen: 'Compare', params: { firstCar: car, selectionKey: Date.now() } })}/>
           <MainSpecs car={car} showSources={showSources}/>
           <TechnicalSections car={car} openSections={openSections} onToggle={key => setOpenSections(current => current.includes(key) ? current.filter(item => item !== key) : [...current, key])}
             showSources={showSources} onSources={setShowSources} enriching={detail.enriching} enrichmentError={detail.enrichmentError} onRetry={detail.enrichMissing}/>

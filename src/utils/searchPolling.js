@@ -1,11 +1,12 @@
 // One request at a time. Cleanup ignores late responses and cancels the next poll.
-export function watchSearchJob({ jobId, getStatus, onComplete, onFailure, onConnectionError, onConnected, delay = 3000, schedule = setTimeout, unschedule = clearTimeout }) {
+export function watchSearchJob({ jobId, getStatus, onComplete, onFailure, onConnectionError, onConnected, onStatus, delay = 3000, schedule = setTimeout, unschedule = clearTimeout }) {
   let cancelled = false;
   let timer;
   async function poll() {
     try {
       const result = await getStatus(jobId);
       if (cancelled) return;
+      onStatus?.(result?.status, result);
       if (result.status === 'done' && result.carro) { onComplete(result.carro); return; }
       if (result.status === 'error') { onFailure(result); return; }
       onConnected?.();

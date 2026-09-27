@@ -7,7 +7,7 @@ import styles from '../styles';
 const specs = [['engine', 'speedometer-outline', 'Motor'], ['power', 'flash-outline', 'Potência'], ['type', 'car-sport-outline', 'Tipo'], ['consumption', 'water-outline', 'Consumo']];
 function summary(field) {
   if (isMissing(field)) return 'Dado não disponível';
-  if (field.origin === 'ai') return 'Estimado por IA · 0%';
+  if (field.origin === 'ai') return 'Estimado por IA';
   if (field.origin === 'imported') return 'Informado na importação';
   return `${field.confidence}% de confiança${field.conflict ? ' · conflito' : ''}`;
 }

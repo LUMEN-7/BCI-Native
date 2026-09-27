@@ -21,6 +21,7 @@ test('PascalCase DTO preserves lineage, zero confidence, conflicts and sources',
   const car = adapter.adaptCarDetail(dto);
   assert.equal(car.id, '5'); assert.equal(car.specs.engine.value, '2.0');
   assert.equal(car.specs.engine.confidence, 0); assert.equal(car.specs.engine.conflict, true);
+  assert.equal(car.specs.engine.origin, 'api');
   assert.equal(car.specs.power.value, '150 cv'); assert.equal(car.specs.cityConsumption.value, '10 km/l');
   assert.equal(car.specs.power.confidence, 90); assert.equal(car.sections.security.length, 2);
   assert.equal(car.averageConfidence, 57);
@@ -41,9 +42,11 @@ test('local import only complements unsupported fields; server keeps persisted v
   assert.equal(car.isImported, true); assert.equal(car.specs.power.value, '150 cv');
   assert.equal(car.specs.engine.value, '2.0'); assert.equal(car.specs.cityConsumption.value, '10 km/l');
   assert.equal(car.description, 'Descrição local'); assert.equal(car.sections.technology[0].origin, 'imported');
-  assert.equal(car.specs.length.value, 'Não informado');
+  assert.equal(car.specs.length.value, '99999'); assert.equal(car.specs.length.origin, 'imported');
+  assert.equal(car.specs.length.confidence, 0); assert.equal(car.specs.length.source, null);
+  assert.equal(car.specs.power.origin, 'api');
   const missing = adapter.adaptCarDetail({ Id: 1 }, imported);
-  assert.equal(missing.specs.engine.value, 'motor local'); assert.equal(missing.specs.engine.confidence, 0);
+  assert.equal(missing.specs.engine.value, 'motor local'); assert.equal(missing.specs.engine.confidence, 0); assert.equal(missing.specs.engine.source, null);
 });
 test('AI cannot overwrite real fields or attach invented source/confidence to enrichment', () => {
   const car = adapter.adaptCarDetail(dto);
@@ -172,6 +175,24 @@ test('detail ignores a late vehicle response after navigating to another lineage
 test('detail distinguishes API failure and missing vehicle without blank state', async () => {
   const harness = hookHarness({ getCar: async () => { const error = new Error('missing'); error.status = 404; throw error; } });
   harness.render(); await flush(); assert.equal(harness.render().notFound, true); assert.equal(harness.render().loading, false); harness.unmount();
+});
+test('detail keeps API data visible when the separate AI analysis request fails', async () => {
+  const harness = hookHarness({ analyze: async () => { throw new Error('Servidor de IA indisponível'); } });
+  harness.render(); await flush(); const state = harness.render();
+  assert.equal(state.car.specs.power.value, '150 cv');
+  assert.equal(state.analysisError, 'Servidor de IA indisponível');
+  assert.equal(state.loading, false);
+  harness.unmount();
+});
+test('IA never receives model, brand or year as enrichable missing fields', async () => {
+  const harness = hookHarness({ getCar: async () => ({ Id: 1, LinhagemId: 5 }) });
+  harness.render(); await flush();
+  const enrich = harness.calls.find(call => call[0] === 'enrich');
+  assert.ok(enrich);
+  assert.equal(enrich[1].includes('model'), false);
+  assert.equal(enrich[1].includes('brand'), false);
+  assert.equal(enrich[1].includes('year'), false);
+  harness.unmount();
 });
 test('editing an import starts with current server values instead of stale local persisted fields', () => {
   const record = { importForm: { power: '999', engine: 'local', description: 'Descrição' } };

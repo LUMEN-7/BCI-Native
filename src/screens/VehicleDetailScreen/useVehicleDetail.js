@@ -36,17 +36,17 @@ export default function useVehicleDetail(route, navigation) {
     if (!vehicle || analysisLock.current) return;
     analysisLock.current = true; setAnalysisLoading(true); setAnalysisError('');
     try {
-      const result = await analyzeVehicle({ nome: vehicle.name, marca: vehicle.brand, ano: vehicle.year, dados: vehicle.isImported ? vehicle : vehicle.raw });
+      const result = await analyzeVehicle({ nome: vehicle.name, marca: vehicle.brand, ano: vehicle.year, dados: vehicle });
       if (request !== epoch.current) return;
       setAnalysis(result);
-      if (result.description) setCar(current => current && !current.description ? { ...current, description: result.description, descriptionOrigin: 'ai' } : current);
+      if (result.description) setCar(current => current && isMissing(current.description) ? { ...current, description: result.description, descriptionOrigin: 'ai', descriptionEvidence: { value: result.description, confidence: 0, source: null, conflict: false, alternatives: [], origin: 'ai' } } : current);
     } catch (e) { if (request === epoch.current) setAnalysisError(e.message); }
     finally { if (request === epoch.current) { analysisLock.current = false; setAnalysisLoading(false); } }
   }
 
   async function enrichMissing(vehicle = car, request = epoch.current) {
     if (!vehicle || vehicle.isImported || enrichmentLock.current) return;
-    const missingFields = Object.keys(vehicle.specs).filter(key => isMissing(vehicle.specs[key]));
+    const missingFields = Object.keys(vehicle.specs).filter(key => !['model', 'brand', 'year'].includes(key) && isMissing(vehicle.specs[key]));
     if (!missingFields.length && Object.values(vehicle.sections).every(items => items.length)) return;
     enrichmentLock.current = true; setEnriching(true); setEnrichmentError('');
     try {
@@ -59,13 +59,21 @@ export default function useVehicleDetail(route, navigation) {
   useEffect(() => {
     const request = ++epoch.current;
     favoriteLock.current = false; analysisLock.current = false; enrichmentLock.current = false; deleteLock.current = false;
-    setCar(null); setImported(null); setLoading(true); setError(''); setNotFound(false);
+    const initialDto = route.params?.car?.raw ?? route.params?.car;
+    const initialCar = initialDto ? adaptCarDetail(initialDto) : null;
+    setCar(initialCar); setImported(null); setLoading(true); setError(''); setNotFound(false);
     setAnalysis(null); setAnalysisLoading(false); setAnalysisError(''); setEnriching(false); setEnrichmentError('');
     setFavoritesReady(false); setActionError(''); setNotice(''); setSaving(false); setDeleting(false);
     async function load() {
       try {
         if (!id) { setNotFound(true); return; }
-        const [dto, records] = await Promise.all([getCar(id), getImportedVehicles(user)]);
+        const dto = await getCar(id);
+        if (request !== epoch.current) return;
+        const apiDetail = adaptCarDetail(dto);
+        if (!apiDetail) { setNotFound(true); setCar(null); return; }
+        setCar(apiDetail);
+        setLoading(false);
+        const records = await getImportedVehicles(user).catch(() => []);
         if (request !== epoch.current) return;
         const record = records.find(item => String(item.id) === id) || null;
         const detail = adaptCarDetail(dto, record);
@@ -78,7 +86,8 @@ export default function useVehicleDetail(route, navigation) {
         } catch (e) { if (request === epoch.current) setActionError(`Não foi possível carregar os favoritos. ${e.message}`); }
       } catch (e) {
         if (request !== epoch.current) return;
-        if (e.status === 404) setNotFound(true); else setError(e.message || 'Não foi possível carregar a ficha.');
+        if (e.status === 404 && !initialCar) setNotFound(true);
+        else setError(e.message || 'Não foi possível carregar a ficha.');
       } finally { if (request === epoch.current) setLoading(false); }
     }
     load();

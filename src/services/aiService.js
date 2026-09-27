@@ -1,16 +1,34 @@
-const AI_SERVER_URL = process.env.EXPO_PUBLIC_AI_SERVER_URL || 'http://10.0.2.2:3001';
 const AI_TIMEOUT_MS = 30000;
 
+export function getAiServerUrl() {
+  const configured = process.env.EXPO_PUBLIC_AI_SERVER_URL?.trim();
+  if (!configured) throw new Error('Servidor de IA não configurado.');
+  const url = configured.replace(/\/+$/, '');
+  try {
+    const parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) throw new Error();
+  } catch { throw new Error('URL do servidor de IA inválida.'); }
+  return url;
+}
+
+function devLog(label, detail) {
+  if (typeof __DEV__ !== 'undefined' && __DEV__) console.log(`[BCI AI] ${label}`, detail);
+}
+
 async function aiFetch(path, payload) {
+  const server = getAiServerUrl();
+  devLog('server', server);
+  devLog(path.endsWith('/analyze') ? 'analyze request' : path.endsWith('/enrich-features') ? 'enrich request' : 'compare request', { path });
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
   try {
-    const response = await fetch(`${AI_SERVER_URL}${path}`, {
+    const response = await fetch(`${server}${path}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload), signal: controller.signal,
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || 'Não foi possível concluir a análise da IA.');
+    devLog('response', { path, ok: true });
     return data;
   } catch (error) {
     if (error.name === 'AbortError') throw new Error('A IA demorou muito para responder. Tente novamente.');

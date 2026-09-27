@@ -9,6 +9,7 @@ export function pick(object, ...names) {
 export const isMissing = field => field == null || field.value == null || String(field.value).trim() === '' || /^(não informado|n\/a)$/i.test(String(field.value));
 const list = value => value == null ? [] : Array.isArray(value) ? value : [value];
 const first = value => Array.isArray(value) ? value[0] || {} : value || {};
+const importedEvidence = value => ({ ...unwrapField(value), confidence: 0, source: null, conflict: false, alternatives: [], origin: 'imported' });
 export function normalizeConfidence(value) {
   const number = Number(value);
   return Number.isFinite(number) ? Math.round(Math.max(0, Math.min(100, number <= 1 ? number * 100 : number))) : 0;
@@ -31,6 +32,7 @@ export function unwrapField(field, suffix = '') {
     source: pick(source, 'fonte', 'source', 'url', 'link') ?? pick(field, 'fonte', 'source', 'url', 'link') ?? null,
     conflict: pick(field, 'conflito', 'conflict') === true,
     alternatives: sources.map(item => ({ value: display(pick(item, 'valor', 'value'), suffix), source: pick(item, 'fonte', 'source', 'url', 'link') ?? null, confidence: normalizeConfidence(pick(item, 'confianca', 'confidence') ?? pick(field, 'confianca', 'confidence')) })),
+    origin: 'api',
   };
 }
 export function adaptCarCard(dto) {
@@ -39,8 +41,8 @@ export function adaptCarCard(dto) {
   const year = pick(dto, 'ano') ?? '';
   return {
     id: String(pick(dto, 'linhagemId', 'id') ?? ''),
-    brand: pick(dto, 'marca') ?? '', model, year, name: `${model} ${year}`.trim(),
-    image: pick(dto, 'imagemUrl') || null,
+    brand: pick(dto, 'marca') ?? '', brandOrigin: 'api', model, modelOrigin: 'api', year, yearOrigin: 'api', name: `${model} ${year}`.trim(),
+    image: pick(dto, 'imagemUrl') || null, imageOrigin: 'api',
     engine: unwrapField(pick(specs, 'motor')).value,
     power: unwrapField(pick(specs, 'potencia'), ' cv').value,
     type: unwrapField(pick(dto, 'categoria')).value,
@@ -92,20 +94,28 @@ export function adaptCarDetail(dto, imported = null) {
     technology: extractFeatures(pick(extras, 'technology', 'tecnologia', 'tecnologias')),
     comfort: extractFeatures(pick(extras, 'comfort', 'conforto')),
   };
-  let description = unwrapField(pick(dto, 'descricao')).value;
-  // Only the fields not persisted by the import endpoint may use the local form.
+  let descriptionEvidence = unwrapField(pick(dto, 'descricao'));
+  let description = descriptionEvidence.value;
+  let descriptionOrigin = 'api';
+  // Local import values complement only fields the API did not return.
   const local = imported?.importForm || {};
-  for (const key of ['engine', 'consumption']) {
-    if (isMissing(specs[key]) && local[key]) specs[key] = { ...unwrapField(local[key]), origin: 'imported' };
+  const localFieldNames = { type: 'segment', cityConsumption: 'consumption' };
+  for (const key of Object.keys(SPEC_MAP)) {
+    const localValue = local[localFieldNames[key] || key];
+    const localField = localValue && typeof localValue === 'object' ? localValue : { value: localValue };
+    if (isMissing(specs[key]) && !isMissing(localField)) specs[key] = importedEvidence(localValue);
   }
+  specs.consumption = specs.cityConsumption;
   for (const key of Object.keys(sections)) {
-    if (!sections[key].length) sections[key] = extractFeatures(local[key]).map(item => ({ ...item, origin: 'imported' }));
+    if (!sections[key].length) sections[key] = extractFeatures(local[key]).map(item => importedEvidence(item.value));
   }
-  if (description === 'Não informado') description = local.description || '';
+  if (description === 'Não informado' && local.description) { description = local.description; descriptionOrigin = 'imported'; descriptionEvidence = importedEvidence(local.description); }
   const valid = Object.entries(specs).filter(([key, value]) => !['model', 'brand', 'year', 'consumption'].includes(key) && !isMissing(value)).map(([, value]) => value);
+  const card = adaptCarCard(dto);
+  if (imported?.importForm?.image && !card.image) { card.image = imported.importForm.image; card.imageOrigin = 'imported'; }
   return {
-    ...adaptCarCard(dto), isImported: Boolean(imported), specs, sections,
-    sources: list(pick(dto, 'fontes', 'sources')), description,
+    ...card, isImported: Boolean(imported), specs, sections,
+    sources: list(pick(dto, 'fontes', 'sources')), description, descriptionOrigin, descriptionEvidence,
     averageConfidence: valid.length ? Math.round(valid.reduce((sum, field) => sum + field.confidence, 0) / valid.length) : 0,
     isFuture: Number(pick(dto, 'ano')) > new Date().getFullYear(), raw: dto,
   };

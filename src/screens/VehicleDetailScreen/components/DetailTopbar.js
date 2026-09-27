@@ -15,7 +15,7 @@ export default function DetailTopbar({ onBack, onHome, onExport, onEdit, onDelet
       <View style={styles.topbarActions}>
         <Action icon="home-outline" label="Ir para Home" onPress={onHome}/>
         <Action icon={favorite ? 'star' : 'star-outline'} label={favorite ? 'Remover dos salvos' : 'Salvar pesquisa'} active={favorite} onPress={onFavorite} busy={saving} disabled={!ready || !favoritesReady || deleting}/>
-        <Action raised icon="download-outline" label="Exportar dados" onPress={onExport} disabled={!ready || deleting}/>
+        <Action raised icon="download-outline" label="Exportar dados" caption="Exportar" onPress={onExport} disabled={!ready || deleting}/>
       </View>
     </View>
     {isImported && <View style={styles.importedActions}>

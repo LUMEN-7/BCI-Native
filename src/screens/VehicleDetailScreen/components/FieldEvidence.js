@@ -15,7 +15,7 @@ export function SourceLink({ source, sources }) {
 export default function FieldEvidence({ field, sources, showSources }) {
   if (!field || isMissing(field)) return null;
   return <View style={styles.evidence}>
-    {field.origin === 'ai' ? <Text style={styles.aiTag}>Estimado por IA · 0%</Text> : field.origin === 'imported' ? <Text style={styles.muted}>Informado na importação · sem verificação</Text> : <ConfidenceBadge confidence={field.confidence} conflict={field.conflict}/>}
+    {field.origin === 'ai' ? <Text style={styles.aiTag}>Estimado por IA</Text> : field.origin === 'imported' ? <Text style={styles.muted}>Informado na importação</Text> : <ConfidenceBadge confidence={field.confidence} conflict={field.conflict}/>}
     {field.conflict && <Text style={styles.conflict}>Fontes com valores divergentes</Text>}
     {showSources && field.origin !== 'ai' && <>
       {field.source != null ? <SourceLink source={field.source} sources={sources}/> : <Text style={styles.muted}>Fonte não informada</Text>}
