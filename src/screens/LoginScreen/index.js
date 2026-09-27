@@ -1,30 +1,12 @@
 import { useState } from "react";
-import {
-  ImageBackground,
-  KeyboardAvoidingView,
-  Platform,
-  Text,
-  View,
-} from "react-native";
-
-import {
-  GoogleOneTapSignIn,
-  isCancelledResponse,
-  isSuccessResponse,
-  isNoSavedCredentialFoundResponse,
-} from "react-native-nitro-google-signin";
-
+import { ImageBackground, KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
+import { GoogleOneTapSignIn, isCancelledResponse, isSuccessResponse, isNoSavedCredentialFoundResponse } from "react-native-nitro-google-signin";
 import FormField from "../../components/FormField";
-import AppButton from "../../components/AppButton";
-
-import {
-  login,
-  loginWithGoogle,
-} from "../../services/authService";
-
+import { Action as AppButton } from "../../components/MobileUI";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { login, loginWithGoogle } from "../../services/authService";
 import { useAuth } from "../../context/AuthContext";
 import { isValidEmail } from "../../utils/validators";
-
 import styles from "./styles";
 
 /*
@@ -32,125 +14,85 @@ import styles from "./styles";
  * do google-services.json / GoogleService-Info.plist.
  */
 GoogleOneTapSignIn.configure({
-  webClientId: "autoDetect",
+  webClientId: "autoDetect"
 });
-
-export default function LoginScreen({ navigation }) {
-  const { establish } = useAuth();
-
+export default function LoginScreen({
+  navigation
+}) {
+  const insets = useSafeAreaInsets();
+  const {
+    establish
+  } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [error, setError] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-
   async function finish(result) {
     if (result?.requiresTwoFactor) {
       navigation.navigate("TwoFactor", {
-        challengeToken: result.challengeToken,
+        challengeToken: result.challengeToken
       });
-
       return;
     }
-
     await establish(result);
   }
-
   async function submit() {
     if (!isValidEmail(email) || !password) {
       setError("Informe um e-mail válido e sua senha.");
       return;
     }
-
     setLoading(true);
     setError("");
-
     try {
-      const result = await login(
-        email.trim(),
-        password
-      );
-
+      const result = await login(email.trim(), password);
       await finish(result);
     } catch (e) {
-      setError(
-        e?.message ||
-          "Usuário ou senha incorretos."
-      );
+      setError(e?.message || "Usuário ou senha incorretos.");
     } finally {
       setLoading(false);
     }
   }
-
   async function handleGoogleLogin() {
     setGoogleLoading(true);
     setError("");
-
     try {
       await GoogleOneTapSignIn.checkPlayServices();
-
       let response = await GoogleOneTapSignIn.signIn();
-
       if (isNoSavedCredentialFoundResponse(response)) {
         response = await GoogleOneTapSignIn.createAccount();
       }
-
       if (isNoSavedCredentialFoundResponse(response)) {
         response = await GoogleOneTapSignIn.presentExplicitSignIn();
       }
-
       if (isCancelledResponse(response)) {
         return;
       }
-
       if (!isSuccessResponse(response)) {
-        throw new Error(
-          "Não foi possível concluir o login com Google."
-        );
+        throw new Error("Não foi possível concluir o login com Google.");
       }
-
       const idToken = response.data?.idToken;
-
       if (!idToken) {
-        throw new Error(
-          "O Google não retornou um ID Token."
-        );
+        throw new Error("O Google não retornou um ID Token.");
       }
-
       const result = await loginWithGoogle(idToken);
-
       await finish(result);
     } catch (e) {
       console.error("Erro Google Sign-In:", e);
-
-      setError(
-        e?.message ||
-          "Não foi possível entrar com Google."
-      );
+      setError(e?.message || "Não foi possível entrar com Google.");
     } finally {
       setGoogleLoading(false);
     }
   }
-
-  return (
-    <KeyboardAvoidingView
-      style={styles.page}
-      behavior={
-        Platform.OS === "ios"
-          ? "padding"
-          : undefined
-      }
-    >
-      <View style={styles.shell}>
-        <ImageBackground
-          source={{
-            uri: "https://wallpapercave.com/wp/wp12639722.jpg",
-          }}
-          style={styles.hero}
-          imageStyle={styles.heroImage}
-        >
+  return <KeyboardAvoidingView style={styles.page} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <ScrollView style={styles.shell} contentContainerStyle={{
+      paddingBottom: insets.bottom + 24
+    }} keyboardShouldPersistTaps="handled">
+        <ImageBackground source={{
+        uri: "https://wallpapercave.com/wp/wp12639722.jpg"
+      }} style={[styles.hero, {
+        height: 210 + insets.top
+      }]} imageStyle={styles.heroImage}>
           <View style={styles.overlay} />
 
           <View style={styles.heroCopy}>
@@ -181,72 +123,29 @@ export default function LoginScreen({ navigation }) {
             automotiva em um só lugar.
           </Text>
 
-          <FormField
-            label="E-mail"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-          />
+          <FormField label="E-mail" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
 
-          <FormField
-            label="Senha"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+          <FormField label="Senha" value={password} onChangeText={setPassword} secureTextEntry />
 
-          {error ? (
-            <Text style={styles.error}>
+          {error ? <Text style={styles.error}>
               {error}
-            </Text>
-          ) : null}
+            </Text> : null}
 
-          <AppButton
-            title="Entrar"
-            onPress={submit}
-            loading={loading}
-            disabled={
-              loading || googleLoading
-            }
-          />
+          <AppButton title="Entrar" onPress={submit} loading={loading} disabled={loading || googleLoading} />
 
-          <AppButton
-            title="Continuar com Google"
-            variant="secondary"
-            onPress={handleGoogleLogin}
-            loading={googleLoading}
-            disabled={
-              loading || googleLoading
-            }
-          />
+          <AppButton title="Continuar com Google" secondary onPress={handleGoogleLogin} loading={googleLoading} disabled={loading || googleLoading} />
 
-          <Text
-            style={styles.link}
-            onPress={() =>
-              navigation.navigate(
-                "ResetPassword"
-              )
-            }
-          >
+          <Text style={styles.link} onPress={() => navigation.navigate("ResetPassword")}>
             Esqueci minha senha
           </Text>
 
           <Text style={styles.footer}>
             Ainda não tem conta?{" "}
-            <Text
-              style={styles.linkStrong}
-              onPress={() =>
-                navigation.navigate(
-                  "Register"
-                )
-              }
-            >
+            <Text style={styles.linkStrong} onPress={() => navigation.navigate("Register")}>
               Criar conta
             </Text>
           </Text>
         </View>
-      </View>
-    </KeyboardAvoidingView>
-  );
+      </ScrollView>
+    </KeyboardAvoidingView>;
 }
