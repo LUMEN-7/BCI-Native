@@ -51,6 +51,8 @@
     "metro-transform-worker": "0.84.5"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/plugin-transform-modules-commonjs": "^7.29.7",
     "babel-preset-expo": "~57.0.0"
   }
 }

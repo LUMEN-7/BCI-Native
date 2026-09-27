@@ -1,6 +1,6 @@
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AppButton from '../../components/AppButton';
+import AppButton from '../../components/SearchAction';
 import styles from './modalStyles';
 
 export default function ModalShell({ title, onClose, busy, children }) {

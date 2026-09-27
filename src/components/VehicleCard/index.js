@@ -1,15 +1,26 @@
+import { useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import SearchAction from '../SearchAction';
 import styles from './styles';
-import AppButton from '../AppButton';
-export default function VehicleCard({ car, onPress, onFavorite, onSchedule, onEdit, favorite=false, selected=false, actionLabel }) {
-  return <Pressable onPress={onPress} style={[styles.card,selected&&styles.selected]}>
-    <View style={styles.imageWrap}>{car.image?<Image source={{uri:car.image}} style={styles.image}/>:<View style={styles.placeholder}><Ionicons name="car-sport-outline" size={34} color="#66768A"/></View>}
-      {onFavorite?<Pressable accessibilityRole="button" accessibilityLabel={favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'} onPress={e => { e.stopPropagation(); onFavorite(); }} hitSlop={12} style={styles.favorite}><Ionicons name={favorite?'bookmark':'bookmark-outline'} size={20} color={favorite?'#0562D2':'#00142E'}/></Pressable>:null}
+
+export default function VehicleCard({ car, onPress, onFavorite, onSchedule, onEdit, favorite = false, selected = false, actionLabel }) {
+  const [failedImage, setFailedImage] = useState(null);
+  return <View style={[styles.card, selected && styles.selected]}>
+    <View style={styles.top}>
+      <Text style={styles.brand}>{String(car.brand || '').toUpperCase()}</Text>
+      {car.isImported && <Text style={styles.badge}>IMPORTADO</Text>}
+      {onFavorite && <Pressable accessibilityRole="button" accessibilityLabel={favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'} accessibilityState={{ selected: favorite }} onPress={onFavorite} style={[styles.favorite, favorite && styles.favoriteActive]}>
+        <Ionicons name={favorite ? 'bookmark' : 'bookmark-outline'} size={20} color={favorite ? '#fff' : '#00142E'}/>
+      </Pressable>}
     </View>
-    <Text style={styles.brand}>{String(car.brand||'').toUpperCase()}</Text><Text style={styles.name}>{car.name||`${car.model||''} ${car.year||''}`}</Text>
-    {car.isImported ? <Text style={styles.action}>IMPORTADO</Text> : null}
-    <View style={styles.meta}><Text style={styles.metaText}>{car.engine||car.type||'Dados BCI'}</Text>{actionLabel?<Text style={styles.action}>{actionLabel}</Text>:null}</View>
-    {car.isImported ? (onEdit ? <AppButton title="Editar" compact variant="secondary" onPress={e => { e.stopPropagation(); onEdit(); }}/> : null) : onSchedule ? <AppButton title="Agendar Pesquisa" compact variant="secondary" onPress={e => { e.stopPropagation(); onSchedule(); }}/> : null}
-  </Pressable>;
+    <Pressable accessibilityRole="button" accessibilityLabel={`${actionLabel || 'Explorar modelo'}: ${car.brand} ${car.name}`} onPress={onPress}>
+      <View style={styles.imageWrap}>{car.image && failedImage !== car.image ? <Image source={{ uri: car.image }} style={styles.image} onError={() => setFailedImage(car.image)}/> : <View style={styles.placeholder}><Ionicons name="car-sport-outline" size={44} color="#8794A6"/><Text style={styles.metaText}>Sem foto disponível</Text></View>}</View>
+      <Text style={styles.category}>{car.type || 'Veículo'}</Text>
+      <Text style={styles.name}>{car.model || car.name}</Text>
+      <Text style={styles.year}>{car.year}</Text>
+      <View style={styles.details}><Text style={styles.action}>{actionLabel || 'EXPLORAR MODELO'}</Text><Ionicons name="arrow-forward" size={20} color="#0562D2"/></View>
+    </Pressable>
+    {car.isImported ? (onEdit && <SearchAction title="Editar" icon="create-outline" compact variant="secondary" onPress={onEdit}/>) : onSchedule && <SearchAction title="Agendar Pesquisa" icon="alarm-outline" compact variant="secondary" onPress={onSchedule}/>}
+  </View>;
 }

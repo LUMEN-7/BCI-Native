@@ -2,7 +2,7 @@ export const RECURRENCES = { once: 'Uma única vez', daily: 'Diariamente', weekl
 
 export function validateSchedule({ car, date, time }, now = new Date()) {
   if (!car?.brand?.trim() || !(car.model || car.modelo || car.name)?.trim()) throw new Error('Selecione um veículo ou informe marca e modelo.');
-  if (car.year && (!/^\d{4}$/.test(String(car.year)) || Number(car.year) < 1886 || Number(car.year) > 2100)) throw new Error('Informe um ano válido entre 1886 e 2100.');
+  if (car.year && (!/^\d{4}$/.test(String(car.year)) || Number(car.year) < 1900 || Number(car.year) > 2100)) throw new Error('Informe um ano válido entre 1900 e 2100.');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) throw new Error('Informe a data no formato AAAA-MM-DD e a hora no formato HH:MM.');
   const [y, m, d] = date.split('-').map(Number);
   const [h, min] = time.split(':').map(Number);

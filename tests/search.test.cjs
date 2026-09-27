@@ -20,6 +20,36 @@ function load(relative, stubs = {}) {
 }
 const imports = load('src/utils/vehicleImport.js');
 const schedules = load('src/utils/schedule.js');
+const { watchSearchJob } = load('src/utils/searchPolling.js');
+const flush = () => new Promise(resolve => setImmediate(resolve));
+
+test('polling retries connection errors, waits for a complete car and stops after completion', async () => {
+  const responses = [new Error('offline'), { status: 'running' }, { status: 'done' }, { status: 'done', carro: { linhagemId: 7 } }];
+  const callbacks = [], timers = [];
+  let calls = 0;
+  watchSearchJob({ jobId: 'job-1', getStatus: async id => {
+    assert.equal(id, 'job-1'); calls++;
+    const value = responses.shift(); if (value instanceof Error) throw value; return value;
+  }, onConnectionError: e => callbacks.push(e.message), onComplete: car => callbacks.push(car.linhagemId), onFailure: () => assert.fail('unexpected failure'), schedule: callback => timers.push(callback), unschedule: () => {} });
+  await flush();
+  while (timers.length) { await timers.shift()(); await flush(); }
+  assert.equal(calls, 4); assert.deepEqual(callbacks, ['offline', 7]);
+});
+test('polling has no overlapping requests and ignores an in-flight result after unmount', async () => {
+  let resolveRequest, calls = 0, scheduled = false;
+  const stop = watchSearchJob({ jobId: 'slow', getStatus: () => { calls++; return new Promise(resolve => { resolveRequest = resolve; }); },
+    onComplete: () => assert.fail('late result'), onFailure: () => assert.fail('late failure'), onConnectionError: () => assert.fail('late error'),
+    schedule: () => { scheduled = true; }, unschedule: () => {},
+  });
+  await flush(); assert.equal(calls, 1); assert.equal(scheduled, false);
+  stop(); resolveRequest({ status: 'done', carro: { id: 1 } });
+  await flush(); assert.equal(scheduled, false);
+});
+test('terminal job failure stops polling', async () => {
+  let failed = false;
+  watchSearchJob({ jobId: 'failed', getStatus: async () => ({ status: 'error' }), onComplete: () => assert.fail('unexpected completion'), onFailure: () => { failed = true; }, onConnectionError: () => {}, schedule: () => assert.fail('must stop'), unschedule: () => {} });
+  await flush(); assert.equal(failed, true);
+});
 
 test('CSV preserves quoted delimiters, escaped quotes, multiline fields and decimal commas', () => {
   const rows = imports.parseVehicleFile('\uFEFFmarca;modelo;ano;preco;descricao\r\nFord;"Territory; Titanium";2026;"189.990,50";"Linha 1\nLinha ""2"""', 'car.csv');

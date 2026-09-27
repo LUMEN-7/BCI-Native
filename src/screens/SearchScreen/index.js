@@ -3,7 +3,7 @@ import { FlatList, Text, View } from 'react-native';
 import Screen from '../../components/Screen';
 import PageHeader from '../../components/PageHeader';
 import FormField from '../../components/FormField';
-import AppButton from '../../components/AppButton';
+import AppButton from '../../components/SearchAction';
 import VehicleCard from '../../components/VehicleCard';
 import LoadingState from '../../components/LoadingState';
 import EmptyState from '../../components/EmptyState';
@@ -13,6 +13,7 @@ import { addFavorite, getFavoriteIds, getFavorites, removeFavorite } from '../..
 import { getUserScopedJson, setUserScopedJson } from '../../services/storage';
 import { useAuth } from '../../context/AuthContext';
 import { adaptCarCard } from '../../utils/vehicleAdapters';
+import { watchSearchJob } from '../../utils/searchPolling';
 import useDebouncedValue from '../../hooks/useDebouncedValue';
 import ScheduleModal from './ScheduleModal';
 import ImportVehicleModal from './ImportVehicleModal';
@@ -35,6 +36,7 @@ export default function SearchScreen({ navigation }) {
   const [importing, setImporting] = useState(null);
   const [notice, setNotice] = useState('');
   const [scheduledCount, setScheduledCount] = useState(0);
+  const [reload, setReload] = useState(0);
   const searchLock = useRef(false);
   const favoriteLocks = useRef(new Set());
   const mounted = useRef(true);
@@ -42,6 +44,7 @@ export default function SearchScreen({ navigation }) {
   useEffect(() => {
     mounted.current = true;
     async function load() {
+      setLoading(true); setError('');
       const results = await Promise.allSettled([getCars(), getFavorites(), listSchedules(), getUserScopedJson('search.job', user), getImportedVehicles(user)]);
       if (!mounted.current) return;
       const [catalog, favorites, schedules, savedJob, imported] = results;
@@ -59,47 +62,37 @@ export default function SearchScreen({ navigation }) {
     }
     load();
     return () => { mounted.current = false; };
-  }, []);
+  }, [reload]);
 
   function upsert(dto) {
     const next = adaptCarCard(dto);
-    setCars(current => [next, ...current.filter(car => car.id !== next.id)]);
+    setCars(current => {
+      const previous = current.find(car => car.id === next.id);
+      return [{ ...previous, ...next, isImported: previous?.isImported || next.isImported }, ...current.filter(car => car.id !== next.id)];
+    });
   }
 
   async function trackJob(result) {
     const id = result?.job_id ?? result?.jobId;
     if (!id) throw new Error('O servidor não retornou o identificador da pesquisa.');
-    searchLock.current = true; setSearching(true); setJobId(id);
+    searchLock.current = true; setSearching(true);
     await setUserScopedJson('search.job', user, id).catch(() => {});
+    if (mounted.current) setJobId(id);
   }
 
   useEffect(() => {
     if (!jobId) return;
-    let cancelled = false;
-    let timer;
     async function finish() {
       searchLock.current = false; setSearching(false); setJobId(null);
       await setUserScopedJson('search.job', user, null).catch(() => {});
     }
-    async function poll() {
-      try {
-        const status = await getJobStatus(jobId);
-        if (cancelled) return;
-        if (status.status === 'done' && status.carro) {
-          upsert(status.carro); setError(''); await finish(); return;
-        }
-        if (status.status === 'error') {
-          setError('A pesquisa não pôde ser concluída. Tente novamente.'); await finish(); return;
-        }
-        setError('');
-      } catch (e) {
-        if (cancelled) return;
-        setError(`${e.message} Tentando acompanhar a pesquisa novamente...`);
-      }
-      if (!cancelled) timer = setTimeout(poll, 3000);
-    }
-    poll();
-    return () => { cancelled = true; clearTimeout(timer); };
+    return watchSearchJob({
+      jobId, getStatus: getJobStatus,
+      onComplete: car => { upsert(car); setError(''); finish(); },
+      onFailure: () => { setError('A pesquisa não pôde ser concluída. Tente novamente.'); finish(); },
+      onConnected: () => setError(''),
+      onConnectionError: e => setError(`${e.message} Tentando acompanhar a pesquisa novamente...`),
+    });
   }, [jobId]);
 
   const results = useMemo(() => {
@@ -144,16 +137,22 @@ export default function SearchScreen({ navigation }) {
 
   const header = <View style={styles.top}>
     <PageHeader eyebrow="Pesquisa inteligente" title="PESQUISAR" description="Filtre a base existente ou inicie uma nova busca no motor do BCI."/>
-    <FormField label="Modelo ou termo" value={q} onChangeText={setQ} placeholder="Ex.: Corolla Cross"/>
-    <View style={styles.row}><View style={styles.field}><FormField label="Marca" value={brand} onChangeText={setBrand} placeholder="Toyota"/></View><View style={styles.small}><FormField label="Ano" value={year} onChangeText={v => setYear(v.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" placeholder="2026"/></View></View>
-    <AppButton title={searching ? 'Pesquisando fontes...' : 'Buscar novo modelo'} onPress={remoteSearch} disabled={loading} loading={searching}/>
-    <AppButton title={`Agendar Pesquisa${scheduledCount ? ` (${scheduledCount})` : ''}`} variant="secondary" onPress={() => setSchedule({ car: null })}/>
-    <AppButton title="Importar" variant="secondary" onPress={() => setImporting({ car: null })}/>
-    {!!notice && <Text accessibilityLiveRegion="polite">{notice}</Text>}
+    <View style={styles.controls}>
+      <FormField label="Modelo ou termo" accessibilityLabel="Pesquisar modelo, marca ou segmento" style={styles.searchInput} value={q} onChangeText={setQ} placeholder="Modelo, marca ou segmento..." returnKeyType="search" onSubmitEditing={remoteSearch}/>
+      <View style={styles.row}><View style={styles.field}><FormField label="Marca" style={styles.input} value={brand} onChangeText={setBrand} placeholder="Digite uma marca"/></View><View style={styles.small}><FormField label="Ano" style={styles.input} value={year} onChangeText={v => setYear(v.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" placeholder="2026"/></View></View>
+      <AppButton title={searching ? 'Pesquisando fontes...' : 'Pesquisar'} icon="search-outline" onPress={remoteSearch} disabled={loading} loading={searching}/>
+      <AppButton title={`Agendar Pesquisa${scheduledCount ? ` (${scheduledCount})` : ''}`} icon="alarm-outline" variant="secondary" onPress={() => setSchedule({ car: null })}/>
+      <AppButton title="Importar" icon="cloud-upload-outline" variant="secondary" onPress={() => setImporting({ car: null })}/>
+    </View>
+    <View style={styles.wrap}>{[[q, setQ, 'Busca'], [brand, setBrand, 'Marca'], [year, setYear, 'Ano']].filter(([value]) => value).map(([value, setter, label]) => <AppButton key={label} title={`${label}: ${value}`} icon="close-outline" compact variant="secondary" onPress={() => setter('')}/>)}</View>
+    {!!(q || brand || year) && <AppButton title="Limpar filtros" icon="refresh-outline" variant="ghost" onPress={() => { setQ(''); setBrand(''); setYear(''); setError(''); }}/>}
+    {!!notice && <Text style={styles.notice} accessibilityLiveRegion="polite">{notice}</Text>}
     {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
+    {!!error && !searching && <AppButton title="Atualizar dados" variant="ghost" disabled={loading} onPress={() => setReload(v => v + 1)}/>}
+    {!loading && <Text style={styles.count}>{results.length} {results.length === 1 ? 'modelo encontrado' : 'modelos encontrados'}</Text>}
   </View>;
 
-  return <Screen scroll={false}>
+  return <Screen scroll={false} contentContainerStyle={styles.screenContent}>
     <FlatList data={loading ? [] : results} keyExtractor={item => item.id} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.list}
       ListHeaderComponent={header} ItemSeparatorComponent={() => <View style={styles.separator}/>}
       ListEmptyComponent={loading ? <LoadingState/> : <EmptyState title="Nenhum modelo encontrado" description="Ajuste os filtros ou inicie uma nova pesquisa."/>}

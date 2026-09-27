@@ -1,7 +1,6 @@
 import apiFetch from './api';
 import { adaptSchedule, validateSchedule } from '../utils/schedule';
 const TO_API = { once: 'Unica', daily: 'Diaria', weekly: 'Semanal', monthly: 'Mensal' };
-const FROM_API = { Unica: 'once', Diaria: 'daily', Semanal: 'weekly', Mensal: 'monthly' };
 export async function listSchedules() {
   const list = await apiFetch('/AgendamentoPesquisa/meus');
   return list.map(adaptSchedule);

@@ -3,7 +3,7 @@ import { Image, Platform, Pressable, Text, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { File } from 'expo-file-system';
-import AppButton from '../../components/AppButton';
+import AppButton from '../../components/SearchAction';
 import FormField from '../../components/FormField';
 import { importVehicle } from '../../services/carsService';
 import { EMPTY_VEHICLE, FIELD_GROUPS, FEATURE_GROUPS, buildImportPayload, normalizeVehicle, parseVehicleFile } from '../../utils/vehicleImport';

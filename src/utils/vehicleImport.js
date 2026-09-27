@@ -164,8 +164,7 @@ export function parseVehicleFile(text, name) {
   });
 }
 
-// Extrai o primeiro número de uma string tipo "169 cv" -> "169".
-// Limitação conhecida: não distingue separador decimal de milhar (ex: "189.990").
+// Accepts values with units and Brazilian decimal/thousands separators.
 export function toNumeric(value) {
   if (value === null || value === undefined || value === '') return null;
   let text = String(value).trim().replace(/\s/g, '');
@@ -214,6 +213,7 @@ export function buildImportPayload(vehicle) {
 
   for (const [key, rawValue] of Object.entries(numericFields)) {
     const numero = toNumeric(rawValue);
+    if (String(rawValue ?? '').trim() && numero === null) throw new Error(`Informe um valor numérico para ${key}.`);
     if (numero !== null) payload[key] = numero;
   }
 
