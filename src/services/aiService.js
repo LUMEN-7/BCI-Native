@@ -20,12 +20,14 @@ async function aiFetch(path, payload) {
 
 export async function analyzeVehicle(vehicle) {
   const data = await aiFetch('/api/ai/analyze', { vehicle });
+  const text = value => typeof value === 'string' ? value : '';
+  const items = value => Array.isArray(value) ? value.filter(item => typeof item === 'string' && item.trim()) : [];
   return {
-    description: data.descricao || '',
-    strengths: Array.isArray(data.pontosFortes) ? data.pontosFortes : [],
-    weaknesses: Array.isArray(data.pontosFracos) ? data.pontosFracos : [],
-    bestUse: data.melhorUso || '',
-    competitors: Array.isArray(data.concorrentesSemelhantes) ? data.concorrentesSemelhantes : [],
+    description: text(data.descricao),
+    strengths: items(data.pontosFortes),
+    weaknesses: items(data.pontosFracos),
+    bestUse: text(data.melhorUso),
+    competitors: items(data.concorrentesSemelhantes),
   };
 }
 
@@ -35,5 +37,14 @@ export async function analyzeComparison(firstCar, secondCar, mathConclusions = {
 }
 
 export async function enrichVehicle(vehicle, missingFields = []) {
-  return aiFetch('/api/ai/enrich-features', { vehicle, missingFields });
+  const data = await aiFetch('/api/ai/enrich-features', { vehicle, missingFields });
+  return {
+    specs: data.specs || {},
+    sections: {
+      performance: Array.isArray(data.secoes?.performance) ? data.secoes.performance : [],
+      security: Array.isArray(data.secoes?.seguranca) ? data.secoes.seguranca : [],
+      technology: Array.isArray(data.secoes?.tecnologia) ? data.secoes.tecnologia : [],
+      comfort: Array.isArray(data.secoes?.conforto) ? data.secoes.conforto : [],
+    },
+  };
 }
