@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LoadingState from '../../components/LoadingState';
 import Action from '../../components/SearchAction';
@@ -42,7 +42,6 @@ export default function VehicleDetailScreen({ route, navigation }) {
         </View> : car && <>
           {!!detail.actionError && <View style={styles.feedback}><Text accessibilityRole="alert" style={styles.error}>{detail.actionError}</Text>{!detail.favoritesReady && <Action title="Recarregar favoritos" variant="secondary" onPress={detail.reload}/>}</View>}
           <VehicleHero car={car} onCompare={() => navigation.navigate('Main', { screen: 'Compare', params: { firstCar: { id: car.id, name: car.name, brand: car.brand, image: car.image, engine: car.specs.engine.value, power: car.specs.power.value, type: car.specs.type.value, raw: car.raw }, selectionKey: Date.now() } })}/>
-          <Pressable accessibilityRole="switch" accessibilityState={{ checked: showSources }} onPress={() => setShowSources(value => !value)} style={styles.sourceToggle}><Text style={styles.linkLabel}>{showSources ? 'Ocultar fontes dos dados' : 'Mostrar fontes dos dados'}</Text></Pressable>
           <MainSpecs car={car} showSources={showSources}/>
           <TechnicalSections car={car} openSections={openSections} onToggle={key => setOpenSections(current => current.includes(key) ? current.filter(item => item !== key) : [...current, key])}
             showSources={showSources} onSources={setShowSources} enriching={detail.enriching} enrichmentError={detail.enrichmentError} onRetry={detail.enrichMissing}/>
