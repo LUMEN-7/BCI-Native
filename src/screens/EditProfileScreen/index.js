@@ -1,2 +1,135 @@
-import { useState } from 'react';import { Image,Text,View } from 'react-native';import * as ImagePicker from 'expo-image-picker';import Screen from '../../components/Screen';import FormField from '../../components/FormField';import AppButton from '../../components/AppButton';import SectionCard from '../../components/SectionCard';import { beginTwoFactor,confirmTwoFactor,disableTwoFactor,removeProfilePhoto,updateProfile,uploadProfilePhoto } from '../../services/userService';import { updateStoredUser } from '../../services/storage';import { useAuth } from '../../context/AuthContext';import styles from './styles';
-export default function EditProfileScreen({navigation}){const{user,setUser}=useAuth();const[name,setName]=useState(user?.nomeExibicao||user?.userName||'');const[photo,setPhoto]=useState(user?.fotoPerfilUrl||null);const[qr,setQr]=useState(null);const[code,setCode]=useState('');const[enabled,setEnabled]=useState(Boolean(user?.doisFatoresAtivo));const[message,setMessage]=useState('');const[error,setError]=useState('');const[loading,setLoading]=useState(false);async function patch(changes){const next=await updateStoredUser(changes);setUser(next)}async function save(){if(!name.trim())return setError('Informe seu nome.');setLoading(true);try{await updateProfile(name.trim());await patch({nomeExibicao:name.trim()});setMessage('Perfil atualizado.');setError('')}catch(e){setError(e.message)}finally{setLoading(false)}}async function pick(){const r=await ImagePicker.launchImageLibraryAsync({mediaTypes:['images'],quality:.8,allowsEditing:true,aspect:[1,1]});if(r.canceled)return;try{const res=await uploadProfilePhoto(r.assets[0]);setPhoto(res.fotoPerfilUrl);await patch({fotoPerfilUrl:res.fotoPerfilUrl})}catch(e){setError(e.message)}}async function remove(){try{await removeProfilePhoto();setPhoto(null);await patch({fotoPerfilUrl:null})}catch(e){setError(e.message)}}async function start2fa(){try{const r=await beginTwoFactor();setQr(r.qrCodeUri||r.qrCode||null);setMessage(r.chaveManual?`Chave manual: ${r.chaveManual}`:'Escaneie o QR retornado pelo backend.')}catch(e){setError(e.message)}}async function confirm(){try{await confirmTwoFactor(code);setEnabled(true);setQr(null);await patch({doisFatoresAtivo:true});setMessage('2FA ativado.')}catch(e){setError(e.message)}}async function disable(){try{await disableTwoFactor();setEnabled(false);await patch({doisFatoresAtivo:false});setMessage('2FA desativado.')}catch(e){setError(e.message)}}return <Screen><Text style={styles.kicker}>CONTA</Text><Text style={styles.heading}>EDITAR PERFIL</Text><SectionCard eyebrow="Identidade" title="DADOS PESSOAIS"><View style={styles.photoRow}>{photo?<Image source={{uri:photo}} style={styles.avatar}/>:<View style={styles.placeholder}/>}<View style={styles.photoActions}><AppButton title="Trocar foto" compact onPress={pick}/>{photo?<AppButton title="Remover" compact variant="ghost" onPress={remove}/>:null}</View></View><FormField label="Nome" value={name} onChangeText={setName}/><FormField label="E-mail" value={user?.email||''} editable={false}/><AppButton title="Salvar alterações" onPress={save} loading={loading}/></SectionCard><SectionCard eyebrow="Segurança" title="AUTENTICAÇÃO EM DUAS ETAPAS">{enabled?<AppButton title="Desativar 2FA" variant="secondary" onPress={disable}/>:qr?<><Text style={styles.info}>O backend iniciou o 2FA. Use a chave/QR exibido no seu autenticador e confirme o código abaixo.</Text>{qr?<Text style={styles.qrText}>{qr}</Text>:null}<FormField label="Código" value={code} onChangeText={(v)=>setCode(v.replace(/\D/g,'').slice(0,6))} keyboardType="number-pad"/><AppButton title="Confirmar 2FA" onPress={confirm}/></>:<AppButton title="Ativar 2FA" onPress={start2fa}/>}</SectionCard>{message?<Text style={styles.message}>{message}</Text>:null}{error?<Text style={styles.error}>{error}</Text>:null}</Screen>}
+import { useState } from 'react';
+import { Image, Linking, Text, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import Screen from '../../components/Screen';
+import PageHeader from '../../components/PageHeader';
+import FormField from '../../components/FormField';
+import { Action, Back, Feedback, Heading, s } from '../../components/MobileUI';
+import { beginTwoFactor, confirmTwoFactor, disableTwoFactor, removeProfilePhoto, updateProfile, uploadProfilePhoto } from '../../services/userService';
+import { updateStoredUser } from '../../services/storage';
+import { useAuth } from '../../context/AuthContext';
+import { pick } from '../../utils/vehicleAdapters';
+export default function EditProfileScreen({
+  navigation
+}) {
+  const {
+      user,
+      setUser
+    } = useAuth(),
+    [name, setName] = useState(pick(user, 'nomeExibicao', 'userName') || ''),
+    [photo, setPhoto] = useState(pick(user, 'fotoPerfilUrl') || null),
+    [setup, setSetup] = useState(null),
+    [code, setCode] = useState(''),
+    [enabled, setEnabled] = useState(pick(user, 'doisFatoresAtivo') === true),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState(''),
+    [message, setMessage] = useState('');
+  async function patch(changes) {
+    setUser(await updateStoredUser(changes));
+  }
+  async function run(operation) {
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    setMessage('');
+    try {
+      await operation();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function choose() {
+    await run(async () => {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) throw new Error('Permita acesso às fotos para escolher uma imagem.');
+      const r = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: .8,
+        allowsEditing: true,
+        aspect: [1, 1]
+      });
+      if (r.canceled) return;
+      const response = await uploadProfilePhoto(r.assets[0]),
+        uri = pick(response, 'fotoPerfilUrl');
+      if (!uri) throw new Error('Não foi possível obter a foto atualizada.');
+      setPhoto(uri);
+      await patch({
+        fotoPerfilUrl: uri
+      });
+      setMessage('Foto atualizada.');
+    });
+  }
+  const qr = pick(setup, 'qrCodeUri', 'qrCode') || '',
+    manual = pick(setup, 'chaveManual') || (() => {
+      try {
+        return new URL(qr).searchParams.get('secret');
+      } catch {
+        return '';
+      }
+    })();
+  return <Screen><Back navigation={navigation} /><PageHeader eyebrow="Sua conta" title="EDITAR PERFIL" description="Personalize sua identidade e proteja seu acesso." />
+    <View style={s.panel}><Heading eyebrow="Identidade" title="FOTO DO PERFIL" />{photo ? <Image source={{
+        uri: photo
+      }} style={{
+        width: 96,
+        height: 96,
+        borderRadius: 96
+      }} /> : <View style={{
+        width: 96,
+        height: 96,
+        borderRadius: 96,
+        backgroundColor: '#EDF4FC',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}><Text style={s.title}>{name[0]?.toUpperCase() || 'U'}</Text></View>}<Text style={s.body}>Escolha uma foto para identificar você no BCI.</Text><View style={s.wrap}><Action title="Trocar foto" icon="camera-outline" disabled={busy} onPress={choose} />{photo && <Action secondary title="Remover foto" disabled={busy} onPress={() => run(async () => {
+          await removeProfilePhoto();
+          setPhoto(null);
+          await patch({
+            fotoPerfilUrl: null
+          });
+        })} />}</View></View>
+    <View style={s.panel}><Heading eyebrow="Dados pessoais" title="SUAS INFORMAÇÕES" /><FormField label="Nome de exibição" value={name} onChangeText={setName} maxLength={100} /><FormField label="E-mail" value={pick(user, 'email') || ''} editable={false} /><Action title="Salvar alterações" loading={busy} onPress={() => run(async () => {
+        if (name.trim().length < 2) throw new Error('Informe um nome com pelo menos 2 caracteres.');
+        await updateProfile(name.trim());
+        await patch({
+          nomeExibicao: name.trim()
+        });
+        setMessage('Perfil atualizado.');
+      })} /></View>
+    <View style={s.panel}><Heading eyebrow="Segurança" title="AUTENTICAÇÃO EM DUAS ETAPAS" description="Adicione uma camada de proteção com seu aplicativo autenticador." /><Text style={[s.strong, {
+        color: enabled ? '#16876E' : '#687482'
+      }]}>{enabled ? 'Proteção ativada' : 'Proteção desativada'}</Text>
+      {enabled ? <Action secondary title="Desativar 2FA" disabled={busy} onPress={() => run(async () => {
+        await disableTwoFactor();
+        setEnabled(false);
+        await patch({
+          doisFatoresAtivo: false
+        });
+        setMessage('Autenticação em duas etapas desativada.');
+      })} /> : setup ? <><Text style={s.body}>1. Adicione esta conta ao seu aplicativo autenticador.</Text>{/^data:image\//.test(qr) && <Image source={{
+          uri: qr
+        }} style={{
+          width: 190,
+          height: 190
+        }} />}{manual && <Text selectable style={[s.strong, {
+          letterSpacing: 2
+        }]}>{manual}</Text>}{/^otpauth:\/\//.test(qr) && <Action secondary title="Abrir autenticador" onPress={() => Linking.openURL(qr).catch(() => setError('Abra seu autenticador e informe a chave manual.'))} />}<Text style={s.body}>2. Digite o código de seis dígitos gerado pelo aplicativo.</Text><FormField label="Código de verificação" value={code} onChangeText={v => setCode(v.replace(/\D/g, '').slice(0, 6))} keyboardType="number-pad" /><Action title="Confirmar 2FA" disabled={busy || code.length !== 6} onPress={() => run(async () => {
+          await confirmTwoFactor(code);
+          setEnabled(true);
+          setSetup(null);
+          setCode('');
+          await patch({
+            doisFatoresAtivo: true
+          });
+          setMessage('Autenticação em duas etapas ativada.');
+        })} /><Action secondary title="Cancelar configuração" disabled={busy} onPress={() => {
+          setSetup(null);
+          setCode('');
+        }} /></> : <Action title="Ativar 2FA" disabled={busy} onPress={() => run(async () => setSetup(await beginTwoFactor()))} />}
+    </View><Feedback error={error} />{!!message && <Text accessibilityRole="alert" style={[s.body, {
+      color: '#16876E'
+    }]}>{message}</Text>}
+  </Screen>;
+}
