@@ -72,7 +72,7 @@ export default function NoteEditorScreen({
       setSaving(false);
     }
   }
-  return <Screen><Back navigation={navigation} /><PageHeader eyebrow="BCI Notas" title={id ? 'EDITAR NOTA' : 'NOVA NOTA'} /><Feedback error={error} retry={() => setRevision(v => v + 1)} />{loading ? <LoadingState /> : <><View style={s.panel}><FormField label="Título" value={title} onChangeText={setTitle} maxLength={200} /><FormField label="Conteúdo" value={content} onChangeText={setContent} multiline textAlignVertical="top" maxLength={5000} style={{
+  return <Screen><PageHeader eyebrow="BCI Notas" title={id ? 'EDITAR NOTA' : 'NOVA NOTA'} /><Back navigation={navigation} /><Feedback error={error} retry={() => setRevision(v => v + 1)} />{loading ? <LoadingState /> : <><View style={s.panel}><FormField label="Título" value={title} onChangeText={setTitle} maxLength={200} /><FormField label="Conteúdo" value={content} onChangeText={setContent} multiline textAlignVertical="top" maxLength={5000} style={{
           minHeight: 220,
           paddingTop: 14
         }} /></View><Heading title="VEÍCULOS VINCULADOS" description="Adicione modelos salvos à sua anotação." /><View style={s.wrap}>{[...cars, ...attached.filter(c => !cars.some(v => String(c.id) === String(v.id)))].map(car => {

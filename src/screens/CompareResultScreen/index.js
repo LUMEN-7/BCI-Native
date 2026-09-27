@@ -119,7 +119,7 @@ export default function CompareResultScreen({
     };
   }, [data, enrichRevision]);
   const detail = details[Number(selected)];
-  return <Screen><Back navigation={navigation} /><PageHeader eyebrow="Comparação automotiva" title="ALÉM DOS NÚMEROS" description="Analise diferenças, especificações e o parecer da IA." /><Feedback error={resource.error} retry={resource.reload} />
+  return <Screen><PageHeader eyebrow="Comparação automotiva" title="ALÉM DOS NÚMEROS" description="Analise diferenças, especificações e o parecer da IA." /><Back navigation={navigation} /><Feedback error={resource.error} retry={resource.reload} />
     {resource.loading ? <LoadingState label="Montando comparação..." /> : data && <>
       <View style={s.wrap}><Action title={saved ? 'Comparação salva' : 'Salvar comparação'} icon="bookmark-outline" loading={saving} disabled={saved} onPress={save} /><Action secondary title="Exportar comparação" icon="download-outline" onPress={() => setExporting(true)} /></View><Feedback error={error} />
       <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{

@@ -69,7 +69,7 @@ export default function EditProfileScreen({
         return '';
       }
     })();
-  return <Screen><Back navigation={navigation} /><PageHeader eyebrow="Sua conta" title="EDITAR PERFIL" description="Personalize sua identidade e proteja seu acesso." />
+  return <Screen><PageHeader eyebrow="Sua conta" title="EDITAR PERFIL" description="Personalize sua identidade e proteja seu acesso." /><Back navigation={navigation} />
     <View style={s.panel}><Heading eyebrow="Identidade" title="FOTO DO PERFIL" />{photo ? <Image source={{
         uri: photo
       }} style={{

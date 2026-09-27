@@ -12,7 +12,7 @@ import styles from './styles';
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const data = useHomeDashboard();
-  return <View style={styles.screen}><ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 84, paddingBottom: insets.bottom + 100 }]} refreshControl={<RefreshControl refreshing={data.loading} onRefresh={data.reload} tintColor="#0562D2" colors={['#0562D2']}/>}>
+  return <View style={styles.screen}><ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 100 }]} refreshControl={<RefreshControl refreshing={data.loading} onRefresh={data.reload} tintColor="#0562D2" colors={['#0562D2']}/> }>
     <View style={styles.container}>
       <HomeHero user={data.user} onSearch={() => navigation.navigate('Search')} onCompare={() => navigation.navigate('Compare')}/>
       {data.errors.length > 0 && <View style={styles.errorBanner}><Text accessibilityRole="alert" style={styles.errorText}>Alguns dados não puderam ser atualizados.</Text><Pressable accessibilityRole="button" disabled={data.loading} onPress={data.reload} style={styles.retry}><Text style={styles.linkText}>Tentar novamente</Text></Pressable></View>}

@@ -2,8 +2,8 @@ import { StyleSheet } from 'react-native';
 import { fonts } from '../../theme/typography';
 export default StyleSheet.create({
   screen: { backgroundColor: '#F8FAFC' },
-  screenContent: { padding: 0, paddingBottom: 0, gap: 0 },
-  top: { paddingTop: 36, paddingBottom: 18 },
+  screenContent: { padding: 0, paddingTop: 0, paddingBottom: 0, gap: 0 },
+  top: { paddingBottom: 18 },
   intro: { marginBottom: 30 },
   eyebrow: { fontFamily: fonts.bold, fontSize: 10, letterSpacing: 2.4, color: '#0562D2' },
   title: { fontFamily: fonts.title, fontSize: 52, lineHeight: 58, letterSpacing: -1, color: '#00142E', marginTop: 8 },

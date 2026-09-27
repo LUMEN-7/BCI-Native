@@ -1,12 +1,14 @@
 import { Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import SearchAction from '../../components/SearchAction';
 import styles from './styles';
 
 export default function SearchHeader({ q, setQ, brand, setBrand, year, setYear, searching, loading, onSearch, onSchedule, onImport, scheduledCount, resultCount, error, notice, onReload }) {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const filters = [[q, setQ, 'Busca'], [brand, setBrand, 'Marca'], [year, setYear, 'Ano']].filter(([value]) => value);
-  return <View style={styles.top}>
+  return <View style={[styles.top, { paddingTop: insets.top + 12 }]}>
     <View style={styles.intro}>
       <Text style={styles.eyebrow}>PESQUISA DE VEÍCULOS</Text>
       <Text accessibilityRole="header" style={[styles.title, width < 400 && styles.smallTitle]}>BUSCAR</Text>

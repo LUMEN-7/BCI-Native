@@ -97,7 +97,7 @@ export default function WorkspaceScreen({
       setError(e.message);
     }
   }
-  return <Screen onRefresh={r.reload} refreshing={r.loading}><Back navigation={navigation} /><PageHeader eyebrow="Inteligência em equipe" title={team?.name || 'WORKSPACE'} description={team?.description || 'Compartilhe análises, discuta dados e acompanhe decisões.'} /><View style={s.wrap}><Action title="Nova publicação" icon="add-outline" disabled={!r.data} onPress={() => setComposer(true)} /><Action secondary title="Membros e convite" icon="people-outline" disabled={!r.data} onPress={() => setInvite(true)} /></View><Tabs value={tab} onChange={setTab} items={[{
+  return <Screen onRefresh={r.reload} refreshing={r.loading}><PageHeader eyebrow="Inteligência em equipe" title={team?.name || 'WORKSPACE'} description={team?.description || 'Compartilhe análises, discuta dados e acompanhe decisões.'} /><Back navigation={navigation} /><View style={s.wrap}><Action title="Nova publicação" icon="add-outline" disabled={!r.data} onPress={() => setComposer(true)} /><Action secondary title="Membros e convite" icon="people-outline" disabled={!r.data} onPress={() => setInvite(true)} /></View><Tabs value={tab} onChange={setTab} items={[{
       id: 'feed',
       label: 'Feed'
     }, {

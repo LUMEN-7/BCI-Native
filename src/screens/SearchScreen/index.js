@@ -149,7 +149,7 @@ export default function SearchScreen({ navigation }) {
     resultCount={results.length} error={error} notice={notice} onReload={() => setReload(v => v + 1)}/>;
 
   return <Screen scroll={false} style={styles.screen} contentContainerStyle={styles.screenContent}>
-    <FlatList data={loading ? [] : results} keyExtractor={item => item.id} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.list}
+    <FlatList data={loading ? [] : results} keyExtractor={item => item.id} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="never" contentContainerStyle={styles.list}
       ListHeaderComponent={header} ItemSeparatorComponent={() => <View style={styles.separator}/>}
       ListEmptyComponent={loading ? <LoadingState/> : <EmptyState title="Nenhum modelo encontrado" description="Ajuste os filtros ou inicie uma nova pesquisa."/>}
       renderItem={({ item }) => <VehicleCard car={item} favorite={favs.includes(item.id)} onFavorite={() => toggle(item.id)} onSchedule={() => setSchedule({ car: item })} onEdit={() => setImporting({ car: item })} onPress={() => navigation.navigate('VehicleDetail', { lineageId: item.id, car: item })}/>}/>

@@ -18,7 +18,7 @@ export default function Screen({
   } = useWindowDimensions();
   const spacing = {
     paddingHorizontal: width < 400 ? 16 : 20,
-    paddingTop: shell ? insets.top + 80 : 24,
+    paddingTop: shell ? insets.top + 12 : 24,
     paddingBottom: shell ? 110 : 40,
     width: '100%',
     maxWidth: 850,

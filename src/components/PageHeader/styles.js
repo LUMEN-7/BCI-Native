@@ -14,7 +14,8 @@ export default StyleSheet.create({
     fontSize: 10,
     letterSpacing: 2.4,
     textTransform: 'uppercase',
-    color: colors.secondary
+    color: colors.secondary,
+    marginRight: 58
   },
   title: {
     fontFamily: fonts.title,
@@ -22,7 +23,8 @@ export default StyleSheet.create({
     lineHeight: 49,
     letterSpacing: -1,
     textTransform: 'uppercase',
-    color: colors.primary
+    color: colors.primary,
+    marginRight: 58
   },
   description: {
     fontFamily: fonts.body,
