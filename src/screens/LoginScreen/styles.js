@@ -2,6 +2,10 @@ import { StyleSheet } from 'react-native';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 export default StyleSheet.create({
+  divider: {flexDirection:'row',alignItems:'center',gap:10,height:24},
+  dividerLine: {flex:1,height:1,backgroundColor:colors.border},
+  dividerText: {fontFamily:fonts.body,fontSize:9,color:colors.muted},
+
   page: {
     flex: 1,
     backgroundColor: colors.primary

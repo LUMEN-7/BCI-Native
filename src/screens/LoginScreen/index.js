@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ImageBackground, KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
 import { GoogleOneTapSignIn, isCancelledResponse, isSuccessResponse, isNoSavedCredentialFoundResponse } from "react-native-nitro-google-signin";
 import FormField from "../../components/FormField";
-import { Action as AppButton } from "../../components/MobileUI";
+import AppButton from "../../components/MobileUI/AuthButton";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { login, loginWithGoogle } from "../../services/authService";
 import { useAuth } from "../../context/AuthContext";
@@ -123,17 +123,18 @@ export default function LoginScreen({
             automotiva em um só lugar.
           </Text>
 
-          <FormField label="E-mail" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+          <FormField variant="auth" label="E-mail" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
 
-          <FormField label="Senha" value={password} onChangeText={setPassword} secureTextEntry />
+          <FormField variant="auth" label="Senha" value={password} onChangeText={setPassword} secureTextEntry />
 
           {error ? <Text style={styles.error}>
               {error}
             </Text> : null}
 
-          <AppButton title="Entrar" onPress={submit} loading={loading} disabled={loading || googleLoading} />
+          <AppButton title="Entrar" icon="arrow-forward-outline" onPress={submit} loading={loading} disabled={loading || googleLoading} />
 
-          <AppButton title="Continuar com Google" secondary onPress={handleGoogleLogin} loading={googleLoading} disabled={loading || googleLoading} />
+          <View style={styles.divider}><View style={styles.dividerLine}/><Text style={styles.dividerText}>OU</Text><View style={styles.dividerLine}/></View>
+          <AppButton title="Continuar com Google" icon="logo-google" onPress={handleGoogleLogin} loading={googleLoading} disabled={loading || googleLoading} />
 
           <Text style={styles.link} onPress={() => navigation.navigate("ResetPassword")}>
             Esqueci minha senha
