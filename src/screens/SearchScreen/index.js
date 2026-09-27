@@ -15,6 +15,8 @@ import { useAuth } from '../../context/AuthContext';
 import { adaptCarCard } from '../../utils/vehicleAdapters';
 import useDebouncedValue from '../../hooks/useDebouncedValue';
 import ScheduleModal from './ScheduleModal';
+import ImportVehicleModal from './ImportVehicleModal';
+import { getImportedVehicles, rememberImportedVehicle } from '../../services/importedVehiclesStorage';
 import styles from './styles';
 
 export default function SearchScreen({ navigation }) {
@@ -30,6 +32,8 @@ export default function SearchScreen({ navigation }) {
   const [jobId, setJobId] = useState(null);
   const [error, setError] = useState('');
   const [schedule, setSchedule] = useState(null);
+  const [importing, setImporting] = useState(null);
+  const [notice, setNotice] = useState('');
   const [scheduledCount, setScheduledCount] = useState(0);
   const searchLock = useRef(false);
   const favoriteLocks = useRef(new Set());
@@ -38,10 +42,12 @@ export default function SearchScreen({ navigation }) {
   useEffect(() => {
     mounted.current = true;
     async function load() {
-      const results = await Promise.allSettled([getCars(), getFavorites(), listSchedules(), getUserScopedJson('search.job', user)]);
+      const results = await Promise.allSettled([getCars(), getFavorites(), listSchedules(), getUserScopedJson('search.job', user), getImportedVehicles(user)]);
       if (!mounted.current) return;
-      const [catalog, favorites, schedules, savedJob] = results;
-      if (catalog.status === 'fulfilled') setCars((Array.isArray(catalog.value) ? catalog.value : []).map(adaptCarCard));
+      const [catalog, favorites, schedules, savedJob, imported] = results;
+      const local = imported.status === 'fulfilled' ? imported.value : [];
+      const remote = catalog.status === 'fulfilled' && Array.isArray(catalog.value) ? catalog.value.map(adaptCarCard) : [];
+      setCars([...local, ...remote.filter(car => !local.some(saved => saved.id === car.id))]);
       if (favorites.status === 'fulfilled') setFavs(getFavoriteIds(favorites.value));
       if (schedules.status === 'fulfilled') setScheduledCount(schedules.value.length);
       const failed = results.find(r => r.status === 'rejected');
@@ -126,12 +132,24 @@ export default function SearchScreen({ navigation }) {
     await trackJob(result);
   }
 
+  async function importedVehicle(result, form, previousId) {
+    const car = { ...adaptCarCard(result.carro), isImported: true, importForm: form };
+    setCars(current => [car, ...current.filter(item => item.id !== car.id && item.id !== previousId)]);
+    setQ(''); setBrand(''); setYear(''); setError('');
+    const ignored = result.colunasNaoReconhecidas || [];
+    setNotice(ignored.length ? `Veículo salvo. Campos não reconhecidos pela API: ${ignored.join(', ')}.` : 'Veículo importado com sucesso.');
+    try { await rememberImportedVehicle(user, car, previousId); }
+    catch { setNotice('Veículo salvo no servidor. Não foi possível guardar a ficha adicional neste dispositivo.'); }
+  }
+
   const header = <View style={styles.top}>
     <PageHeader eyebrow="Pesquisa inteligente" title="PESQUISAR" description="Filtre a base existente ou inicie uma nova busca no motor do BCI."/>
     <FormField label="Modelo ou termo" value={q} onChangeText={setQ} placeholder="Ex.: Corolla Cross"/>
     <View style={styles.row}><View style={styles.field}><FormField label="Marca" value={brand} onChangeText={setBrand} placeholder="Toyota"/></View><View style={styles.small}><FormField label="Ano" value={year} onChangeText={v => setYear(v.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" placeholder="2026"/></View></View>
     <AppButton title={searching ? 'Pesquisando fontes...' : 'Buscar novo modelo'} onPress={remoteSearch} disabled={loading} loading={searching}/>
     <AppButton title={`Agendar Pesquisa${scheduledCount ? ` (${scheduledCount})` : ''}`} variant="secondary" onPress={() => setSchedule({ car: null })}/>
+    <AppButton title="Importar" variant="secondary" onPress={() => setImporting({ car: null })}/>
+    {!!notice && <Text accessibilityLiveRegion="polite">{notice}</Text>}
     {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
   </View>;
 
@@ -139,7 +157,8 @@ export default function SearchScreen({ navigation }) {
     <FlatList data={loading ? [] : results} keyExtractor={item => item.id} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.list}
       ListHeaderComponent={header} ItemSeparatorComponent={() => <View style={styles.separator}/>}
       ListEmptyComponent={loading ? <LoadingState/> : <EmptyState title="Nenhum modelo encontrado" description="Ajuste os filtros ou inicie uma nova pesquisa."/>}
-      renderItem={({ item }) => <VehicleCard car={item} favorite={favs.includes(item.id)} onFavorite={() => toggle(item.id)} onSchedule={() => setSchedule({ car: item })} onPress={() => navigation.navigate('VehicleDetail', { lineageId: item.id, car: item })}/>}/>
+      renderItem={({ item }) => <VehicleCard car={item} favorite={favs.includes(item.id)} onFavorite={() => toggle(item.id)} onSchedule={() => setSchedule({ car: item })} onEdit={() => setImporting({ car: item })} onPress={() => navigation.navigate('VehicleDetail', { lineageId: item.id, car: item })}/>}/>
     {schedule && <ScheduleModal cars={cars} initialCar={schedule.car} onClose={() => setSchedule(null)} onRun={runScheduled} searchBusy={searching || loading} onCount={setScheduledCount}/>}
+    {importing && <ImportVehicleModal initialVehicle={importing.car} onClose={() => setImporting(null)} onSaved={importedVehicle}/>}
   </Screen>;
 }

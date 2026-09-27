@@ -23,6 +23,7 @@ export function adaptCarCard(dto) {
     engine: unwrapField(specs.motor || specs.Motor).value,
     power: unwrapField(specs.potencia || specs.Potencia, ' cv').value,
     type: unwrapField(dto?.categoria || dto?.Categoria).value,
+    isImported: dto?.isImported === true || dto?.importado === true,
     raw: dto,
   };
 }

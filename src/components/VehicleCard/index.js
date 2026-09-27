@@ -2,13 +2,14 @@ import { Image, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import styles from './styles';
 import AppButton from '../AppButton';
-export default function VehicleCard({ car, onPress, onFavorite, onSchedule, favorite=false, selected=false, actionLabel }) {
+export default function VehicleCard({ car, onPress, onFavorite, onSchedule, onEdit, favorite=false, selected=false, actionLabel }) {
   return <Pressable onPress={onPress} style={[styles.card,selected&&styles.selected]}>
     <View style={styles.imageWrap}>{car.image?<Image source={{uri:car.image}} style={styles.image}/>:<View style={styles.placeholder}><Ionicons name="car-sport-outline" size={34} color="#66768A"/></View>}
-      {onFavorite?<Pressable onPress={onFavorite} hitSlop={12} style={styles.favorite}><Ionicons name={favorite?'bookmark':'bookmark-outline'} size={20} color={favorite?'#0562D2':'#00142E'}/></Pressable>:null}
+      {onFavorite?<Pressable accessibilityRole="button" accessibilityLabel={favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'} onPress={e => { e.stopPropagation(); onFavorite(); }} hitSlop={12} style={styles.favorite}><Ionicons name={favorite?'bookmark':'bookmark-outline'} size={20} color={favorite?'#0562D2':'#00142E'}/></Pressable>:null}
     </View>
     <Text style={styles.brand}>{String(car.brand||'').toUpperCase()}</Text><Text style={styles.name}>{car.name||`${car.model||''} ${car.year||''}`}</Text>
+    {car.isImported ? <Text style={styles.action}>IMPORTADO</Text> : null}
     <View style={styles.meta}><Text style={styles.metaText}>{car.engine||car.type||'Dados BCI'}</Text>{actionLabel?<Text style={styles.action}>{actionLabel}</Text>:null}</View>
-    {onSchedule ? <AppButton title="Agendar Pesquisa" compact variant="secondary" onPress={e => { e.stopPropagation(); onSchedule(); }}/> : null}
+    {car.isImported ? (onEdit ? <AppButton title="Editar" compact variant="secondary" onPress={e => { e.stopPropagation(); onEdit(); }}/> : null) : onSchedule ? <AppButton title="Agendar Pesquisa" compact variant="secondary" onPress={e => { e.stopPropagation(); onSchedule(); }}/> : null}
   </Pressable>;
 }
