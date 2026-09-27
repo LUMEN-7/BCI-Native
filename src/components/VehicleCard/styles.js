@@ -1,4 +1,20 @@
 import { StyleSheet } from 'react-native';
-import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
-export default StyleSheet.create({card:{backgroundColor:colors.white,borderRadius:18,borderWidth:1,borderColor:colors.border,padding:12,gap:5},selected:{borderColor:colors.secondary,borderWidth:2},imageWrap:{height:150,borderRadius:13,overflow:'hidden',backgroundColor:colors.surfaceSoft,position:'relative'},image:{width:'100%',height:'100%',resizeMode:'cover'},placeholder:{flex:1,alignItems:'center',justifyContent:'center'},favorite:{position:'absolute',right:10,top:10,width:36,height:36,borderRadius:18,backgroundColor:'rgba(255,255,255,.92)',alignItems:'center',justifyContent:'center'},brand:{fontFamily:fonts.bold,fontSize:10,letterSpacing:1.5,color:colors.secondary,marginTop:7},name:{fontFamily:fonts.title,fontSize:22,color:colors.primary,textTransform:'uppercase'},meta:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',gap:8},metaText:{flex:1,fontFamily:fonts.body,fontSize:12,color:colors.lightGrey},action:{fontFamily:fonts.bold,fontSize:11,color:colors.secondary}});
+export default StyleSheet.create({
+  card: { backgroundColor: '#fff', borderRadius: 24, borderWidth: 1, borderColor: '#E1E7EF', padding: 18, gap: 12, shadowColor: '#00142E', shadowOpacity: 0.05, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 2 },
+  selected: { borderColor: '#0562D2', borderWidth: 2 },
+  top: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  brand: { flex: 1, fontFamily: fonts.bold, fontSize: 12, letterSpacing: 1.7, color: '#00142E' },
+  badge: { fontFamily: fonts.bold, fontSize: 10, letterSpacing: 1, color: '#0562D2', backgroundColor: '#EAF3FF', borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6 },
+  favorite: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: '#DFE6EF', alignItems: 'center', justifyContent: 'center' },
+  favoriteActive: { backgroundColor: '#00142E', borderColor: '#00142E' },
+  imageWrap: { height: 185, borderRadius: 18, overflow: 'hidden', backgroundColor: '#F5F7FA', marginBottom: 16 },
+  image: { width: '100%', height: '100%', resizeMode: 'contain' },
+  placeholder: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
+  metaText: { fontFamily: fonts.body, fontSize: 13, color: '#64748B' },
+  category: { fontFamily: fonts.semibold, fontSize: 11, color: '#64748B', textTransform: 'uppercase', letterSpacing: 1.2 },
+  name: { fontFamily: fonts.title, fontSize: 27, color: '#00142E', textTransform: 'uppercase', marginTop: 5 },
+  year: { fontFamily: fonts.body, fontSize: 16, color: '#526176', marginTop: 3 },
+  details: { borderTopWidth: 1, borderColor: '#ECF0F5', marginTop: 16, paddingTop: 16, paddingBottom: 3, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  action: { flex: 1, fontFamily: fonts.bold, fontSize: 12, letterSpacing: 1, color: '#0562D2' },
+});
