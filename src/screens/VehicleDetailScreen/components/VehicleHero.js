@@ -19,15 +19,14 @@ export default function VehicleHero({ car, onCompare }) {
     </View>
     <View style={styles.heroCopy}>
       <Text style={styles.eyebrow}>{car.brand || 'MARCA NÃO INFORMADA'}</Text>
-      <Text accessibilityRole="header" style={styles.heroTitle}>{car.model}</Text>
+      <Text accessibilityRole="header" style={styles.heroTitle}>{car.name}</Text>
       <View style={styles.identityRow}>
-        {car.year !== '' && <Text style={styles.year}>{car.year}</Text>}
         {!isMissing(car.specs.type) && <Text style={styles.category}>{car.specs.type.value}</Text>}
       </View>
-      <Text style={styles.body}>{car.description || 'Descrição não informada na ficha do veículo.'}</Text>
+      <Text style={styles.heroDescription}>{car.description || 'Descrição não informada na ficha do veículo.'}</Text>
       {car.descriptionOrigin === 'ai' && <Text style={styles.aiTag}>Descrição estimada por IA</Text>}
       <View style={styles.confidenceRow}><Text style={styles.muted}>Confiança dos dados</Text><ConfidenceBadge confidence={car.averageConfidence}/></View>
-      <Action title="Comparar modelo" icon="git-compare-outline" onPress={onCompare}/>
+      <Action title="Comparar modelo" icon="open-outline" onPress={onCompare}/>
     </View>
   </View>;
 }
