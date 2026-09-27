@@ -1,35 +1,385 @@
-import { NavigationContainer } from '@react-navigation/native';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useAuth } from '../context/AuthContext';
-import DrawerContent from '../components/DrawerContent';
-import LoadingState from '../components/LoadingState';
-import { drawerStyle, headerOptions } from './styles';
+import {
+  NavigationContainer,
+} from "@react-navigation/native";
 
-import LoginScreen from '../screens/LoginScreen';
-import RegisterScreen from '../screens/RegisterScreen';
-import ResetPasswordScreen from '../screens/ResetPasswordScreen';
-import TwoFactorScreen from '../screens/TwoFactorScreen';
-import WelcomeScreen from '../screens/WelcomeScreen';
-import HomeScreen from '../screens/HomeScreen';
-import SearchScreen from '../screens/SearchScreen';
-import VehicleDetailScreen from '../screens/VehicleDetailScreen';
-import CompareScreen from '../screens/CompareScreen';
-import CompareResultScreen from '../screens/CompareResultScreen';
-import SavedScreen from '../screens/SavedScreen';
-import NotesScreen from '../screens/NotesScreen';
-import NoteEditorScreen from '../screens/NoteEditorScreen';
-import AlertsScreen from '../screens/AlertsScreen';
-import InsightsScreen from '../screens/InsightsScreen';
-import ProfileScreen from '../screens/ProfileScreen';
-import EditProfileScreen from '../screens/EditProfileScreen';
-import WorkspaceAccessScreen from '../screens/WorkspaceAccessScreen';
-import WorkspaceScreen from '../screens/WorkspaceScreen';
+import {
+  createNativeStackNavigator,
+} from "@react-navigation/native-stack";
 
-const Stack=createNativeStackNavigator(); const Drawer=createDrawerNavigator();
-function MainDrawer(){return <Drawer.Navigator drawerContent={(p)=><DrawerContent {...p}/>} screenOptions={{...headerOptions,drawerType:'front',drawerStyle}}>
-  <Drawer.Screen name="Home" component={HomeScreen} options={{title:'Início'}}/><Drawer.Screen name="Search" component={SearchScreen} options={{title:'Pesquisar'}}/><Drawer.Screen name="Compare" component={CompareScreen} options={{title:'Comparar'}}/><Drawer.Screen name="Insights" component={InsightsScreen}/><Drawer.Screen name="Alerts" component={AlertsScreen} options={{title:'Alertas'}}/><Drawer.Screen name="WorkspaceAccess" component={WorkspaceAccessScreen} options={{title:'Workspace'}}/><Drawer.Screen name="Saved" component={SavedScreen} options={{title:'Salvos'}}/><Drawer.Screen name="Notes" component={NotesScreen} options={{title:'BCI Notas'}}/><Drawer.Screen name="Profile" component={ProfileScreen} options={{title:'Perfil'}}/>
-</Drawer.Navigator>}
-function AuthStack(){return <Stack.Navigator screenOptions={{headerShown:false}}><Stack.Screen name="Login" component={LoginScreen}/><Stack.Screen name="Register" component={RegisterScreen}/><Stack.Screen name="ResetPassword" component={ResetPasswordScreen}/><Stack.Screen name="TwoFactor" component={TwoFactorScreen}/></Stack.Navigator>}
-function AppStack(){const {user}=useAuth(); const needsWelcome=!(user?.nomeExibicao||user?.NomeExibicao||user?.userName||'').trim(); return <Stack.Navigator initialRouteName={needsWelcome?'Welcome':'Main'} screenOptions={headerOptions}><Stack.Screen name="Main" component={MainDrawer} options={{headerShown:false}}/><Stack.Screen name="Welcome" component={WelcomeScreen} options={{headerShown:false}}/><Stack.Screen name="VehicleDetail" component={VehicleDetailScreen} options={{title:'Modelo'}}/><Stack.Screen name="CompareResult" component={CompareResultScreen} options={{title:'Comparação'}}/><Stack.Screen name="NoteEditor" component={NoteEditorScreen} options={{title:'BCI Nota'}}/><Stack.Screen name="EditProfile" component={EditProfileScreen} options={{title:'Editar perfil'}}/><Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{title:'Redefinir senha'}}/><Stack.Screen name="Workspace" component={WorkspaceScreen} options={{title:'Workspace'}}/></Stack.Navigator>}
-export default function AppNavigator(){const {user,booting}=useAuth(); if(booting)return <LoadingState label="Preparando o BCI..."/>; return <NavigationContainer>{user?<AppStack/>:<AuthStack/>}</NavigationContainer>}
+import {
+  View,
+} from "react-native";
+
+import { useAuth } from "../context/AuthContext";
+
+import GlobalNavbar from "../components/GlobalNavbar";
+import LoadingState from "../components/LoadingState";
+
+import {
+  headerOptions,
+} from "./styles";
+
+import FloatingNotes from "../components/FloatingNotes";
+import LoginScreen from "../screens/LoginScreen";
+import RegisterScreen from "../screens/RegisterScreen";
+import ResetPasswordScreen from "../screens/ResetPasswordScreen";
+import TwoFactorScreen from "../screens/TwoFactorScreen";
+import WelcomeScreen from "../screens/WelcomeScreen";
+
+import HomeScreen from "../screens/HomeScreen";
+import SearchScreen from "../screens/SearchScreen";
+import VehicleDetailScreen from "../screens/VehicleDetailScreen";
+
+import CompareScreen from "../screens/CompareScreen";
+import CompareResultScreen from "../screens/CompareResultScreen";
+
+import SavedScreen from "../screens/SavedScreen";
+
+import NotesScreen from "../screens/NotesScreen";
+import NoteEditorScreen from "../screens/NoteEditorScreen";
+
+import AlertsScreen from "../screens/AlertsScreen";
+
+import InsightsScreen from "../screens/InsightsScreen";
+
+import ProfileScreen from "../screens/ProfileScreen";
+import EditProfileScreen from "../screens/EditProfileScreen";
+
+import WorkspaceAccessScreen from "../screens/WorkspaceAccessScreen";
+import WorkspaceScreen from "../screens/WorkspaceScreen";
+
+const RootStack =
+  createNativeStackNavigator();
+
+const MainStack =
+  createNativeStackNavigator();
+
+const AuthStackNavigator =
+  createNativeStackNavigator();
+
+/*
+ * Wrapper usado pelas telas principais.
+ *
+ * Ele mantém o conteúdo original intacto e apenas
+ * coloca o navbar global por cima.
+ */
+function withGlobalShell(
+  ScreenComponent,
+  routeName
+) {
+  return function GlobalScreen(props) {
+    return (
+      <View style={{ flex: 1 }}>
+        <ScreenComponent {...props} />
+
+        <GlobalNavbar
+          navigation={props.navigation}
+          currentRoute={routeName}
+        />
+
+        <FloatingNotes
+          navigation={props.navigation}
+        />
+      </View>
+    );
+  };
+}
+
+/*
+ * Componentes principais com Navbar.
+ */
+
+const HomeWithNavbar =
+  withGlobalShell(
+    HomeScreen,
+    "Home"
+  );
+
+const SearchWithNavbar =
+  withGlobalShell(
+    SearchScreen,
+    "Search"
+  );
+
+const CompareWithNavbar =
+  withGlobalShell(
+    CompareScreen,
+    "Compare"
+  );
+
+const InsightsWithNavbar =
+  withGlobalShell(
+    InsightsScreen,
+    "Insights"
+  );
+
+const AlertsWithNavbar =
+  withGlobalShell(
+    AlertsScreen,
+    "Alerts"
+  );
+
+const WorkspaceAccessWithNavbar =
+  withGlobalShell(
+    WorkspaceAccessScreen,
+    "WorkspaceAccess"
+  );
+
+const SavedWithNavbar =
+  withGlobalShell(
+    SavedScreen,
+    "Saved"
+  );
+
+const NotesWithNavbar =
+  withGlobalShell(
+    NotesScreen,
+    "Notes"
+  );
+
+const ProfileWithNavbar =
+  withGlobalShell(
+    ProfileScreen,
+    "Profile"
+  );
+
+/*
+ * Navegação principal.
+ *
+ * Não usamos mais Drawer.
+ * O próprio GlobalNavbar controla a navegação.
+ */
+function MainNavigator() {
+  return (
+    <MainStack.Navigator
+      initialRouteName="Home"
+      screenOptions={{
+        headerShown: false,
+
+        contentStyle: {
+          backgroundColor: "#F7F7F5",
+        },
+      }}
+    >
+      <MainStack.Screen
+        name="Home"
+        component={HomeWithNavbar}
+      />
+
+      <MainStack.Screen
+        name="Search"
+        component={SearchWithNavbar}
+      />
+
+      <MainStack.Screen
+        name="Compare"
+        component={CompareWithNavbar}
+      />
+
+      <MainStack.Screen
+        name="Insights"
+        component={InsightsWithNavbar}
+      />
+
+      <MainStack.Screen
+        name="Alerts"
+        component={AlertsWithNavbar}
+      />
+
+      <MainStack.Screen
+        name="WorkspaceAccess"
+        component={
+          WorkspaceAccessWithNavbar
+        }
+      />
+
+      <MainStack.Screen
+        name="Saved"
+        component={SavedWithNavbar}
+      />
+
+      <MainStack.Screen
+        name="Notes"
+        component={NotesWithNavbar}
+      />
+
+      <MainStack.Screen
+        name="Profile"
+        component={ProfileWithNavbar}
+      />
+    </MainStack.Navigator>
+  );
+}
+
+/*
+ * Login / cadastro.
+ *
+ * Aqui o navbar não aparece.
+ */
+function AuthStack() {
+  return (
+    <AuthStackNavigator.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <AuthStackNavigator.Screen
+        name="Login"
+        component={LoginScreen}
+      />
+
+      <AuthStackNavigator.Screen
+        name="Register"
+        component={RegisterScreen}
+      />
+
+      <AuthStackNavigator.Screen
+        name="ResetPassword"
+        component={
+          ResetPasswordScreen
+        }
+      />
+
+      <AuthStackNavigator.Screen
+        name="TwoFactor"
+        component={TwoFactorScreen}
+      />
+    </AuthStackNavigator.Navigator>
+  );
+}
+
+/*
+ * Stack autenticada.
+ *
+ * Main = telas normais com navbar global.
+ *
+ * As telas abaixo são fluxos secundários
+ * como detalhe e edição.
+ */
+function AppStack() {
+  const { user } = useAuth();
+
+  const displayName =
+    user?.nomeExibicao ||
+    user?.NomeExibicao ||
+    user?.userName ||
+    "";
+
+  const needsWelcome =
+    !displayName.trim();
+
+  return (
+    <RootStack.Navigator
+      initialRouteName={
+        needsWelcome
+          ? "Welcome"
+          : "Main"
+      }
+      screenOptions={
+        headerOptions
+      }
+    >
+      <RootStack.Screen
+        name="Main"
+        component={MainNavigator}
+        options={{
+          headerShown: false,
+        }}
+      />
+
+      <RootStack.Screen
+        name="Welcome"
+        component={WelcomeScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+
+      <RootStack.Screen
+        name="VehicleDetail"
+        component={
+          VehicleDetailScreen
+        }
+        options={{
+          title: "Modelo",
+        }}
+      />
+
+      <RootStack.Screen
+        name="CompareResult"
+        component={
+          CompareResultScreen
+        }
+        options={{
+          title: "Comparação",
+        }}
+      />
+
+      <RootStack.Screen
+        name="NoteEditor"
+        component={
+          NoteEditorScreen
+        }
+        options={{
+          title: "BCI Nota",
+        }}
+      />
+
+      <RootStack.Screen
+        name="EditProfile"
+        component={
+          EditProfileScreen
+        }
+        options={{
+          title: "Editar perfil",
+        }}
+      />
+
+      <RootStack.Screen
+        name="ResetPassword"
+        component={
+          ResetPasswordScreen
+        }
+        options={{
+          title:
+            "Redefinir senha",
+        }}
+      />
+
+      <RootStack.Screen
+        name="Workspace"
+        component={
+          WorkspaceScreen
+        }
+        options={{
+          title: "Workspace",
+        }}
+      />
+    </RootStack.Navigator>
+  );
+}
+
+export default function AppNavigator() {
+  const {
+    user,
+    booting,
+  } = useAuth();
+
+  if (booting) {
+    return (
+      <LoadingState
+        label="Preparando o BCI..."
+      />
+    );
+  }
+
+  return (
+    <NavigationContainer>
+      {user ? (
+        <AppStack />
+      ) : (
+        <AuthStack />
+      )}
+    </NavigationContainer>
+  );
+}
