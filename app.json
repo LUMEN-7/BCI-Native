@@ -23,6 +23,7 @@
     },
     "plugins": [
       "expo-secure-store",
+      "react-native-nitro-google-signin",
       [
         "expo-image-picker",
         {
@@ -33,12 +34,13 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#ffffff",
-            "image": "./assets/images/splash-icon.png",
-            "imageWidth": 180,
-            "resizeMode": "contain"
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 180,
+          "resizeMode": "contain"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "@react-native-google-signin/google-signin"
     ],
     "extra": {
       "eas": {
