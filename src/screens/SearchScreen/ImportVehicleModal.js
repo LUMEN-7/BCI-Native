@@ -3,8 +3,9 @@ import { Image, Platform, Pressable, Text, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { File } from 'expo-file-system';
+import { Ionicons } from '@expo/vector-icons';
 import AppButton from '../../components/SearchAction';
-import FormField from '../../components/FormField';
+import FormField from './SearchField';
 import { importVehicle } from '../../services/carsService';
 import { EMPTY_VEHICLE, FIELD_GROUPS, FEATURE_GROUPS, buildImportPayload, normalizeVehicle, parseVehicleFile } from '../../utils/vehicleImport';
 import ModalShell from './ModalShell';
@@ -63,11 +64,11 @@ export default function ImportVehicleModal({ initialVehicle, onClose, onSaved })
     });
   }
   const allFields = [...FIELD_GROUPS.flatMap(group => group.fields), ...FEATURE_GROUPS];
-  return <ModalShell title={step === 'choice' ? 'Como deseja importar?' : step === 'review' ? 'Revisar antes de salvar' : initialVehicle ? 'Editar veículo importado' : 'Ficha do veículo'} onClose={onClose} busy={busy}>
+  return <ModalShell kind="import" title={step === 'choice' ? 'Como deseja importar?' : step === 'review' ? 'Revisar antes de salvar' : initialVehicle ? 'Editar veículo importado' : 'Ficha do veículo'} onClose={onClose} busy={busy}>
     {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
     {step === 'choice' ? <>
-      <View style={styles.card}><Text style={styles.heading}>Importar arquivo</Text><Text style={styles.text}>Leia CSV ou JSON para preencher a ficha automaticamente.</Text><AppButton title="Escolher CSV / JSON" loading={busy} onPress={readFile}/></View>
-      <View style={styles.card}><Text style={styles.heading}>Ficha manual</Text><Text style={styles.text}>Informe os dados do veículo e adicione uma imagem.</Text><AppButton title="Preencher manualmente" disabled={busy} variant="secondary" onPress={() => setStep('form')}/></View>
+      <Pressable accessibilityRole="button" disabled={busy} onPress={readFile} style={styles.choiceCard}><Ionicons name="cloud-upload-outline" size={32} color="#0562D2"/><Text style={styles.choiceTitle}>{busy ? 'Lendo arquivo...' : 'Importar automaticamente do arquivo'}</Text><Text style={styles.text}>Leia um CSV ou JSON e preencha a ficha com os dados encontrados.</Text></Pressable>
+      <Pressable accessibilityRole="button" disabled={busy} onPress={() => setStep('form')} style={styles.choiceCard}><Ionicons name="document-text-outline" size={32} color="#0562D2"/><Text style={styles.choiceTitle}>Preencher ficha manualmente</Text><Text style={styles.text}>Comece com uma ficha vazia e informe os dados do veículo.</Text></Pressable>
     </> : step === 'select' ? <>
       <Text style={styles.text}>{fileName}: {records.length} veículos. Escolha uma ficha para revisar e salvar.</Text>
       {records.map((record, i) => <Pressable key={i} accessibilityRole="button" style={styles.choice} onPress={() => { setVehicle(record); setStep('form'); }}><Text style={styles.text}>{i + 1}. {record.brand} {record.modelo} {record.ano}</Text></Pressable>)}
@@ -79,7 +80,7 @@ export default function ImportVehicleModal({ initialVehicle, onClose, onSaved })
         <AppButton title="Enviar imagem" variant="secondary" disabled={busy} onPress={photo}/>
         <FormField label="URL da imagem (opcional)" value={vehicle.image?.startsWith('data:') ? '' : vehicle.image || ''} onChangeText={value => update('image', value)} autoCapitalize="none" editable={!busy}/>
         {!!vehicle.image && <AppButton title="Remover imagem" variant="ghost" disabled={busy} onPress={() => update('image', '')}/>}
-        {FIELD_GROUPS.map(group => <View key={group.title} style={styles.card}><Text style={styles.heading}>{group.title}</Text>{group.fields.map(([field, label, placeholder]) => <FormField key={field} label={label} value={String(vehicle[field] ?? '')} placeholder={placeholder} editable={!busy} onChangeText={value => update(field, value)}/>)}</View>)}
+        {FIELD_GROUPS.map(group => <View key={group.title} style={styles.card}><Text style={styles.eyebrow}>FICHA TÉCNICA</Text><Text style={styles.sectionTitle}>{group.title}</Text>{group.fields.map(([field, label, placeholder]) => <FormField key={field} label={label} value={String(vehicle[field] ?? '')} placeholder={placeholder} editable={!busy} onChangeText={value => update(field, value)}/>)}</View>)}
         <View style={styles.card}><Text style={styles.heading}>Itens adicionais</Text>{FEATURE_GROUPS.map(([field, label]) => <FormField key={field} label={`${label} (um por linha)`} multiline value={Array.isArray(vehicle[field]) ? vehicle[field].join('\n') : String(vehicle[field] || '')} editable={!busy} onChangeText={value => update(field, value)}/>)}</View>
         <AppButton title="Revisar ficha" disabled={busy} onPress={review}/>
         {!initialVehicle && <AppButton title="Voltar às opções" disabled={busy} variant="ghost" onPress={() => setStep('choice')}/>}

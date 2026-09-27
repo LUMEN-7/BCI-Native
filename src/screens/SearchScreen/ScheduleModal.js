@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import AppButton from '../../components/SearchAction';
-import FormField from '../../components/FormField';
+import FormField from './SearchField';
 import { deleteSchedule, listSchedules, runScheduleNow, saveSchedule, toggleSchedule } from '../../services/scheduleService';
 import { RECURRENCES } from '../../utils/schedule';
 import ModalShell from './ModalShell';
@@ -52,7 +52,7 @@ export default function ScheduleModal({ cars, initialCar, onClose, onRun, search
   const selectedCar = cars.find(car => car.id === selected);
   const matches = cars.filter(c => !c.isImported && `${c.brand} ${c.name}`.toLowerCase().includes(query.trim().toLowerCase()));
   return <ModalShell title="Agendar Pesquisa" onClose={onClose} busy={busy}>
-    <View style={styles.row}><AppButton title="Novo" variant={tab === 'new' ? 'primary' : 'secondary'} disabled={busy} onPress={() => setTab('new')}/><AppButton title={`Agendados (${list.length})`} variant={tab === 'list' ? 'primary' : 'secondary'} disabled={busy} onPress={() => setTab('list')}/></View>
+    <View style={styles.tabs}>{[['new', 'Novo'], ['list', 'Agendados (' + list.length + ')']].map(([value, label]) => <Pressable key={value} accessibilityRole="tab" accessibilityState={{ selected: tab === value }} disabled={busy} onPress={() => setTab(value)} style={[styles.tab, tab === value && styles.activeTab]}><Text style={styles.tabText}>{label}</Text></Pressable>)}</View>
     {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
     {!!message && <Text accessibilityLiveRegion="polite" style={styles.success}>{message}</Text>}
     {tab === 'new' ? <>
