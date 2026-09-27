@@ -26,6 +26,7 @@ export async function exportCar(lineageId, format = 'csv', separator = ',') {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 60000);
   let file;
+  let shared = false;
   try {
     const response = await apiRequest('/Exportacao', {
       method: 'POST', signal: controller.signal,
@@ -38,11 +39,14 @@ export async function exportCar(lineageId, format = 'csv', separator = ',') {
     file.create(); file.write(bytes);
     clearTimeout(timeout);
     await Sharing.shareAsync(file.uri, { ...options, dialogTitle: 'Salvar ou compartilhar dados do veículo' });
+    // Android may resolve when the chooser closes, before the receiving app reads the URI.
+    // Keep successful exports in the OS-managed cache instead of invalidating that URI.
+    shared = true;
   } catch (error) {
     if (error.name === 'AbortError') throw new Error('A exportação demorou muito. Tente novamente.');
     throw error;
   } finally {
     clearTimeout(timeout);
-    if (file?.exists) { try { file.delete(); } catch { /* The OS also clears its cache. */ } }
+    if (!shared && file?.exists) { try { file.delete(); } catch { /* The OS also clears its cache. */ } }
   }
 }

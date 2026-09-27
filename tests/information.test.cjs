@@ -79,11 +79,11 @@ function exportHarness({ failed = false, empty = false, available = true } = {})
   });
   return { module, calls, files };
 }
-test('export uses real payload, preserves binary bytes/ZIP MIME and removes temporary file', async () => {
+test('export uses real payload and keeps binary bytes/ZIP MIME available to the receiving app', async () => {
   const { module, calls, files } = exportHarness();
   await module.exportCar('5', 'csv', ';');
   assert.equal(calls[0][1], '/Exportacao'); assert.deepEqual(JSON.parse(calls[0][2].body), { itens: [{ linhagemId: 5 }], formato: 'csv', separador: ';' });
-  assert.deepEqual([...files[0].bytes], [0, 255, 128]); assert.equal(files[0].deleted, true);
+  assert.deepEqual([...files[0].bytes], [0, 255, 128]); assert.equal(files[0].exists, true);
   assert.equal(calls[1][2].mimeType, 'application/zip'); assert.ok(!files[0].uri.includes('..'));
 });
 test('non-CSV export omits separator and sharing failure cleans cache', async () => {
@@ -118,3 +118,65 @@ test('authenticated binary requests retain session-expiry behavior', async () =>
   } finally { global.fetch = originalFetch; }
 });
 
+function hookHarness(dependencies = {}) {
+  let cursor = 0, pending = [], effects = [], cells = [], route = { params: { lineageId: '5' } };
+  const user = { id: 8 };
+  const calls = [];
+  const react = {
+    useState(initial) { const i = cursor++; if (!(i in cells)) cells[i] = typeof initial === 'function' ? initial() : initial; return [cells[i], value => { cells[i] = typeof value === 'function' ? value(cells[i]) : value; }]; },
+    useRef(initial) { const i = cursor++; return cells[i] ||= { current: initial }; },
+    useEffect(effect, deps) { const i = cursor++; if (!effects[i] || deps.some((value, k) => value !== effects[i].deps[k])) { pending.push(() => { effects[i]?.cleanup?.(); effects[i] = { deps, cleanup: effect() }; }); } },
+  };
+  const hook = load('src/screens/VehicleDetailScreen/useVehicleDetail.js', {
+    react,
+    '../../context/AuthContext': { useAuth: () => ({ user }) },
+    '../../services/carsService': { getCar: async id => { calls.push(['getCar', id]); return dependencies.getCar ? dependencies.getCar(id) : dto; } },
+    '../../services/userService': { getFavoriteIds: response => response.map(String), getFavorites: async () => [], addFavorite: async id => { calls.push(['addFavorite', id]); return dependencies.addFavorite?.(); }, removeFavorite: async id => calls.push(['removeFavorite', id]) },
+    '../../services/importedVehiclesStorage': { getImportedVehicles: async () => dependencies.imported ? [{ id: '5', importForm: { description: 'Local' } }] : [], rememberImportedVehicle: async () => {}, removeImportedVehicle: async () => {} },
+    '../../services/aiService': { analyzeVehicle: async payload => { calls.push(['analyze', payload]); return dependencies.analyze ? dependencies.analyze(payload) : { description: 'Descrição estimada', strengths: [], weaknesses: [], competitors: [], bestUse: '' }; }, enrichVehicle: async (car, missing) => { calls.push(['enrich', missing]); return { specs: { torque: '20' }, sections: {} }; } },
+  }).default;
+  const navigation = { navigate: (...args) => calls.push(['navigate', ...args]), setParams: params => { route = { params }; } };
+  function render() { cursor = 0; const result = hook(route, navigation); const run = pending; pending = []; run.forEach(effect => effect()); return result; }
+  return { render, calls, setId(id) { route = { params: { lineageId: id } }; }, unmount() { effects.forEach(effect => effect?.cleanup?.()); } };
+}
+const flush = () => new Promise(resolve => setImmediate(resolve));
+test('detail loads the lineage, automatically analyzes normal vehicles and protects real specs', async () => {
+  const harness = hookHarness();
+  harness.render(); await flush(); const state = harness.render();
+  assert.equal(state.car.id, '5'); assert.equal(state.loading, false);
+  assert.equal(state.car.specs.power.value, '150 cv'); assert.equal(state.car.specs.torque.origin, 'ai');
+  assert.equal(state.car.descriptionOrigin, 'ai'); assert.equal(harness.calls[0][1], '5');
+  assert.equal(harness.calls.filter(call => call[0] === 'analyze').length, 1);
+  harness.unmount();
+});
+test('imported detail requires an explicit AI action and guards duplicate favorite requests', async () => {
+  let finish;
+  const harness = hookHarness({ imported: true, addFavorite: () => new Promise(resolve => { finish = resolve; }) });
+  harness.render(); await flush(); let state = harness.render();
+  assert.equal(state.car.description, 'Local'); assert.equal(harness.calls.some(call => call[0] === 'analyze' || call[0] === 'enrich'), false);
+  const save = state.toggleFavorite(); const duplicate = state.toggleFavorite();
+  assert.equal(harness.render().saving, true); assert.equal(harness.calls.filter(call => call[0] === 'addFavorite').length, 1);
+  finish(); await Promise.all([save, duplicate]); state = harness.render();
+  assert.equal(state.favorite, true); assert.equal(state.notice, 'Pesquisa salva com sucesso.');
+  await state.generateAnalysis(); assert.equal(harness.calls.filter(call => call[0] === 'analyze').length, 1);
+  harness.unmount();
+});
+test('detail ignores a late vehicle response after navigating to another lineage', async () => {
+  let finishOld;
+  const harness = hookHarness({ imported: true, getCar: id => id === '5' ? new Promise(resolve => { finishOld = resolve; }) : { ...dto, LinhagemId: 6 } });
+  harness.render(); harness.setId('6'); harness.render(); await flush();
+  assert.equal(harness.render().car.id, '6');
+  finishOld(dto); await flush(); assert.equal(harness.render().car.id, '6');
+  harness.unmount();
+});
+test('detail distinguishes API failure and missing vehicle without blank state', async () => {
+  const harness = hookHarness({ getCar: async () => { const error = new Error('missing'); error.status = 404; throw error; } });
+  harness.render(); await flush(); assert.equal(harness.render().notFound, true); assert.equal(harness.render().loading, false); harness.unmount();
+});
+test('editing an import starts with current server values instead of stale local persisted fields', () => {
+  const record = { importForm: { power: '999', engine: 'local', description: 'Descrição' } };
+  const car = adapter.adaptCarDetail(dto, record);
+  const edit = adapter.importedEditRecord(car, record);
+  assert.equal(edit.importForm.power, '150 cv'); assert.equal(edit.importForm.engine, '2.0');
+  assert.equal(edit.importForm.description, 'Descrição');
+});
