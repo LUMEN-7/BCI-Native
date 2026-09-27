@@ -2,8 +2,8 @@ import apiFetch, { apiFetchMultipart } from './api';
 
 export function getFavorites() { return apiFetch('/user/modelos'); }
 export function getFavoriteIds(response) {
-  return (Array.isArray(response) ? response : response?.favoriteCarros || [])
-    .map((car) => car.linhagemId ?? car.id).filter((id) => id != null).map(String);
+  return (Array.isArray(response) ? response : response?.favoriteCarros || response?.FavoriteCarros || [])
+    .map((car) => car.linhagemId ?? car.LinhagemId ?? car.id ?? car.Id).filter((id) => id != null).map(String);
 }
 export function addFavorite(carId) { return apiFetch('/user/modelos', { method: 'POST', body: JSON.stringify({ linhagemId: Number(carId) || carId }) }); }
 export function removeFavorite(carId) { return apiFetch(`/user/modelos/${carId}`, { method: 'DELETE' }); }
