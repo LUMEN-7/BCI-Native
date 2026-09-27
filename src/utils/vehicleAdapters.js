@@ -1,70 +1,146 @@
-function firstSource(field) {
-  const sources = field?.Fontes || field?.fontes || [];
-  return Array.isArray(sources) ? sources[0] : sources;
+// Backend DTOs mix PascalCase envelopes and camelCase containers.
+export function pick(object, ...names) {
+  if (!object || typeof object !== 'object') return undefined;
+  for (const name of names) {
+    const key = Object.keys(object).find(k => k.toLowerCase() === name.toLowerCase());
+    if (key !== undefined && object[key] != null) return object[key];
+  }
+}
+export const isMissing = field => field == null || field.value == null || String(field.value).trim() === '' || /^(não informado|n\/a)$/i.test(String(field.value));
+const list = value => value == null ? [] : Array.isArray(value) ? value : [value];
+const first = value => Array.isArray(value) ? value[0] || {} : value || {};
+export function normalizeConfidence(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.round(Math.max(0, Math.min(100, number <= 1 ? number * 100 : number))) : 0;
+}
+function display(value, suffix) {
+  if (value == null || value === '') return 'Não informado';
+  if (Array.isArray(value)) return value.map(v => display(v, '')).join(', ');
+  if (typeof value === 'object') return display(pick(value, 'valor', 'value'), suffix);
+  const text = String(value).trim();
+  // Preserve units provided by the backend; don't turn "150 cv" into "150 cv cv".
+  return `${text}${suffix && /^-?\d+(?:[.,]\d+)?$/.test(text) ? suffix : ''}`;
 }
 export function unwrapField(field, suffix = '') {
-  if (field == null) return { value: 'Não informado', source: null, confidence: 0, conflict: false };
-  if (typeof field === 'string' || typeof field === 'number') return { value: `${field}${suffix}`, source: null, confidence: 100, conflict: false };
-  const source = firstSource(field);
-  const raw = source?.Valor ?? source?.valor ?? field?.Valor ?? field?.valor;
-  const value = raw == null || raw === '' ? 'Não informado' : `${Array.isArray(raw) ? raw.join(', ') : raw}${suffix}`;
-  const confidence = Math.round(Number(field?.Confianca ?? field?.confianca ?? source?.Confianca ?? source?.confianca ?? 0) * 100);
-  return { value, source: source?.Fonte ?? source?.fonte ?? null, confidence, conflict: Boolean(field?.Conflito ?? field?.conflito) };
+  const sources = list(pick(field, 'fontes'));
+  const source = sources[0];
+  const raw = pick(source, 'valor', 'value') ?? pick(field, 'valor', 'value') ?? (typeof field !== 'object' ? field : null);
+  const confidence = normalizeConfidence(pick(field, 'confianca', 'confidence') ?? pick(source, 'confianca', 'confidence'));
+  return {
+    value: display(raw, suffix), confidence,
+    source: pick(source, 'fonte', 'source', 'url', 'link') ?? pick(field, 'fonte', 'source', 'url', 'link') ?? null,
+    conflict: pick(field, 'conflito', 'conflict') === true,
+    alternatives: sources.map(item => ({ value: display(pick(item, 'valor', 'value'), suffix), source: pick(item, 'fonte', 'source', 'url', 'link') ?? null, confidence: normalizeConfidence(pick(item, 'confianca', 'confidence') ?? pick(field, 'confianca', 'confidence')) })),
+  };
 }
 export function adaptCarCard(dto) {
-  const specs = dto?.especificacoes?.[0] || dto?.Especificacoes?.[0] || {};
+  const specs = first(pick(dto, 'especificacoes'));
+  const model = display(pick(dto, 'modelo'), '');
+  const year = pick(dto, 'ano') ?? '';
   return {
-    id: String(dto?.linhagemId ?? dto?.LinhagemId ?? dto?.id ?? dto?.Id),
-    brand: dto?.marca ?? dto?.Marca ?? '',
-    model: dto?.modelo ?? dto?.Modelo ?? '',
-    year: dto?.ano ?? dto?.Ano ?? '',
-    name: `${dto?.modelo ?? dto?.Modelo ?? ''} ${dto?.ano ?? dto?.Ano ?? ''}`.trim(),
-    image: dto?.imagemUrl ?? dto?.ImagemUrl ?? null,
-    engine: unwrapField(specs.motor || specs.Motor).value,
-    power: unwrapField(specs.potencia || specs.Potencia, ' cv').value,
-    type: unwrapField(dto?.categoria || dto?.Categoria).value,
-    isImported: dto?.isImported === true || dto?.importado === true,
-    raw: dto,
+    id: String(pick(dto, 'linhagemId', 'id') ?? ''),
+    brand: pick(dto, 'marca') ?? '', model, year, name: `${model} ${year}`.trim(),
+    image: pick(dto, 'imagemUrl') || null,
+    engine: unwrapField(pick(specs, 'motor')).value,
+    power: unwrapField(pick(specs, 'potencia'), ' cv').value,
+    type: unwrapField(pick(dto, 'categoria')).value,
+    isImported: pick(dto, 'isImported', 'importado') === true, raw: dto,
   };
 }
-export function adaptCarDetail(dto) {
-  const specs = dto?.especificacoes?.[0] || {};
-  const consumption = dto?.consumos?.[0] || {};
-  const dimensions = dto?.dimensoes?.[0] || {};
-  const fields = {
-    motor: unwrapField(specs.motor), potencia: unwrapField(specs.potencia, ' cv'), torque: unwrapField(specs.torque, ' kgfm'),
-    transmissao: unwrapField(specs.transmissao), tracao: unwrapField(specs.tracao),
-    cidade: unwrapField(consumption.cidade, ' km/l'), estrada: unwrapField(consumption.estrada, ' km/l'),
-    comprimento: unwrapField(dimensions.comprimento, ' m'), largura: unwrapField(dimensions.largura, ' m'), altura: unwrapField(dimensions.altura, ' m'), entreEixos: unwrapField(dimensions.entreEixos, ' m'),
-    categoria: unwrapField(dto?.categoria),
-  };
-  const confidences = Object.values(fields).map((f) => f.confidence).filter((v) => v > 0);
-  const averageConfidence = confidences.length ? Math.round(confidences.reduce((a,b)=>a+b,0)/confidences.length) : 0;
-  return { ...adaptCarCard(dto), description: dto?.descricao || 'Dados técnicos detalhados extraídos da base do BCI.', fields, averageConfidence, isFuture: Number(dto?.ano) > new Date().getFullYear(), raw: dto };
+export function extractFeatures(value) {
+  if (value == null) return [];
+  if (Array.isArray(value)) return value.flatMap(extractFeatures);
+  const sources = list(pick(value, 'fontes'));
+  if (sources.length) return sources.flatMap(source => {
+    const values = list(pick(source, 'valor', 'value'));
+    return values.flatMap(item => extractFeatures({ valor: item, fonte: pick(source, 'fonte', 'source'), confianca: pick(value, 'confianca', 'confidence') ?? pick(source, 'confianca', 'confidence'), conflito: pick(value, 'conflito', 'conflict') }));
+  });
+  const raw = pick(value, 'valor', 'value');
+  if (Array.isArray(raw)) return raw.flatMap(item => extractFeatures({ ...value, valor: item, value: item }));
+  const field = unwrapField(value);
+  if (isMissing(field)) return [];
+  return field.value.split(/[;\n]/).map(item => item.trim()).filter(Boolean).map(item => ({ ...field, value: item }));
 }
 
+export function importedEditRecord(car, record) {
+  const form = { ...record.importForm, brand: car.brand, modelo: car.model, ano: String(car.year), image: car.image, description: car.description };
+  for (const key of Object.keys(SPEC_MAP)) form[key] = isMissing(car.specs[key]) ? '' : car.specs[key].value;
+  form.segment = isMissing(car.specs.type) ? '' : car.specs.type.value;
+  form.consumption = isMissing(car.specs.consumption) ? '' : car.specs.consumption.value;
+  for (const [key, items] of Object.entries(car.sections)) form[key] = items.map(item => item.value).join('\n');
+  return { ...record, raw: car.raw, importForm: form };
+}
+const SPEC_MAP = {
+  engine: ['especificacoes', 'motor', ''], power: ['especificacoes', 'potencia', ' cv'],
+  torque: ['especificacoes', 'torque', ' kgfm'], powerRpm: ['especificacoes', 'potenciaRpm', ' rpm'], torqueRpm: ['especificacoes', 'torqueRpm', ' rpm'],
+  transmission: ['especificacoes', 'transmissao', ''], drivetrain: ['especificacoes', 'tracao', ''],
+  cityConsumption: ['consumos', 'cidade', ' km/l'], highwayConsumption: ['consumos', 'estrada', ' km/l'],
+  length: ['dimensoes', 'comprimento', ''], width: ['dimensoes', 'largura', ''], height: ['dimensoes', 'altura', ''], wheelbase: ['dimensoes', 'entreEixos', ''],
+  tireType: ['pneus', 'tipo', ''], rim: ['pneus', 'aro', '″'], tireWidth: ['pneus', 'largura', ' mm'], tireProfile: ['pneus', 'perfil', '%'],
+  tankCapacity: ['extras', 'capacidadeTanque', ' L'], fuelType: ['extras', 'tipoCombustivel', ''], loadCapacity: ['extras', 'capacidadeCarga', ' kg'], towingCapacity: ['extras', 'capacidadeReboque', ' kg'],
+};
+export function adaptCarDetail(dto, imported = null) {
+  if (!dto || pick(dto, 'excluido') === true || pick(dto, 'id', 'linhagemId') == null) return null;
+  const specs = Object.fromEntries(Object.entries(SPEC_MAP).map(([key, [group, name, suffix]]) => [key, unwrapField(pick(first(pick(dto, group)), name), suffix)]));
+  specs.model = unwrapField(pick(dto, 'modelo')); specs.brand = unwrapField(pick(dto, 'marca')); specs.year = unwrapField(pick(dto, 'ano'));
+  specs.type = unwrapField(pick(dto, 'categoria')); specs.driveModes = unwrapField(pick(dto, 'modos'));
+  specs.consumption = specs.cityConsumption;
+  const extras = first(pick(dto, 'extras'));
+  const sections = {
+    performance: extractFeatures(pick(extras, 'performance', 'desempenho')),
+    security: extractFeatures(pick(extras, 'security', 'seguranca', 'segurança')),
+    technology: extractFeatures(pick(extras, 'technology', 'tecnologia', 'tecnologias')),
+    comfort: extractFeatures(pick(extras, 'comfort', 'conforto')),
+  };
+  let description = unwrapField(pick(dto, 'descricao')).value;
+  // Only the fields not persisted by the import endpoint may use the local form.
+  const local = imported?.importForm || {};
+  for (const key of ['engine', 'consumption']) {
+    if (isMissing(specs[key]) && local[key]) specs[key] = { ...unwrapField(local[key]), origin: 'imported' };
+  }
+  for (const key of Object.keys(sections)) {
+    if (!sections[key].length) sections[key] = extractFeatures(local[key]).map(item => ({ ...item, origin: 'imported' }));
+  }
+  if (description === 'Não informado') description = local.description || '';
+  const valid = Object.entries(specs).filter(([key, value]) => !['model', 'brand', 'year', 'consumption'].includes(key) && !isMissing(value)).map(([, value]) => value);
+  return {
+    ...adaptCarCard(dto), isImported: Boolean(imported), specs, sections,
+    sources: list(pick(dto, 'fontes', 'sources')), description,
+    averageConfidence: valid.length ? Math.round(valid.reduce((sum, field) => sum + field.confidence, 0) / valid.length) : 0,
+    isFuture: Number(pick(dto, 'ano')) > new Date().getFullYear(), raw: dto,
+  };
+}
+export function applyEnrichment(car, enrichment, requestedFields) {
+  const specs = { ...car.specs };
+  for (const key of requestedFields) {
+    const field = unwrapField(enrichment?.specs?.[key]);
+    if (isMissing(specs[key]) && !isMissing(field)) specs[key] = { value: field.value, source: null, confidence: 0, conflict: false, origin: 'ai', alternatives: [] };
+  }
+  const sections = { ...car.sections };
+  for (const key of Object.keys(sections)) {
+    if (!sections[key].length) sections[key] = extractFeatures(enrichment?.sections?.[key]).map(item => ({ value: item.value, source: null, confidence: 0, conflict: false, origin: 'ai', alternatives: [] }));
+  }
+  return { ...car, specs, sections };
+}
+export function safeSourceUrl(value) {
+  if (typeof value !== 'string') return null;
+  try {
+    const url = new URL(value.trim());
+    return ['http:', 'https:'].includes(url.protocol) && url.hostname && !url.username && !url.password ? url.href : null;
+  } catch { return null; }
+}
+export function resolveSource(source, sources = []) {
+  if (source == null || source === '') return null;
+  const record = typeof source === 'object' ? source : sources.find(item => ['id', 'nome', 'name', 'url', 'link'].some(key => String(pick(item, key) ?? '') === String(source)));
+  const rawUrl = pick(record, 'url', 'link', 'site') ?? (typeof source === 'string' ? source : null);
+  const url = safeSourceUrl(rawUrl);
+  return { name: String(pick(record, 'nome', 'name') ?? rawUrl ?? pick(record, 'id') ?? 'Fonte sem nome'), url };
+}
 export function adaptComparisonCar(dto) {
   if (!dto) return null;
-  const specs = dto.especificacoes?.[0] || dto.specs || {};
-  const consumption = dto.consumos?.[0] || {};
-  const dimensions = dto.dimensoes?.[0] || {};
-  return {
-    id: String(dto.id ?? dto.linhagemId),
-    brand: dto.marca || dto.brand || '',
-    name: dto.name || `${dto.marca || ''} ${dto.modelo || ''} ${dto.ano || ''}`.trim(),
-    image: dto.imagemUrl || dto.image || null,
-    specs: {
-      Motor: unwrapField(specs.motor || specs.engine).value,
-      Potência: unwrapField(specs.potencia || specs.power, ' cv').value,
-      Torque: unwrapField(specs.torque, ' kgfm').value,
-      Transmissão: unwrapField(specs.transmissao || specs.transmission).value,
-      Tração: unwrapField(specs.tracao || specs.drivetrain).value,
-      'Consumo cidade': unwrapField(consumption.cidade, ' km/l').value,
-      'Consumo estrada': unwrapField(consumption.estrada, ' km/l').value,
-      Comprimento: unwrapField(dimensions.comprimento, ' m').value,
-      Largura: unwrapField(dimensions.largura, ' m').value,
-      Altura: unwrapField(dimensions.altura, ' m').value,
-    },
-    raw: dto,
-  };
+  const detail = adaptCarDetail(dto);
+  const fields = detail?.specs || {};
+  return { ...adaptCarCard(dto), id: String(pick(dto, 'id', 'linhagemId') ?? ''), specs: Object.fromEntries([
+    ['Motor', 'engine'], ['Potência', 'power'], ['Torque', 'torque'], ['Transmissão', 'transmission'], ['Tração', 'drivetrain'], ['Consumo cidade', 'cityConsumption'], ['Consumo estrada', 'highwayConsumption'], ['Comprimento', 'length'], ['Largura', 'width'], ['Altura', 'height'],
+  ].map(([label, key]) => [label, fields[key]?.value || 'Não informado'])), raw: dto };
 }
