@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Text } from 'react-native';
 import AuthFrame from '../../components/MobileUI/AuthFrame';
 import { Action, Back, Feedback, Heading, s } from '../../components/MobileUI';
+import AuthButton from '../../components/MobileUI/AuthButton';
 import FormField from '../../components/FormField';
 import { register } from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
@@ -33,5 +34,5 @@ export default function RegisterScreen({
       setLoading(false);
     }
   }
-  return <AuthFrame><Back navigation={navigation} /><Text style={s.eyebrow}>FORD · BCI</Text><Heading eyebrow="Cadastro" title="CRIAR CONTA." description="Crie seu acesso para começar a explorar análises de inteligência competitiva." /><FormField label="Nome" value={name} onChangeText={setName} /><FormField label="E-mail" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" /><FormField label="Senha" value={password} onChangeText={setPassword} secureTextEntry /><FormField label="Confirmar senha" value={confirm} onChangeText={setConfirm} secureTextEntry /><Text style={s.meta}>Mínimo de 8 caracteres, uma letra maiúscula e um número.</Text><Feedback error={error} /><Action title="Cadastrar" icon="arrow-forward-outline" loading={loading} onPress={submit} /><Action secondary title="Já tenho conta" onPress={() => navigation.goBack()} /></AuthFrame>;
+  return <AuthFrame><Back navigation={navigation} /><Text style={s.eyebrow}>FORD · BCI</Text><Heading eyebrow="Cadastro" title="CRIAR CONTA." description="Crie seu acesso para começar a explorar análises de inteligência competitiva." /><FormField variant="auth" label="Nome" value={name} onChangeText={setName} /><FormField variant="auth" label="E-mail" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" /><FormField variant="auth" label="Senha" value={password} onChangeText={setPassword} secureTextEntry /><FormField variant="auth" label="Confirmar senha" value={confirm} onChangeText={setConfirm} secureTextEntry /><Text style={s.meta}>Mínimo de 8 caracteres, uma letra maiúscula e um número.</Text><Feedback error={error} /><AuthButton dark title="Cadastrar" icon="arrow-forward-outline" loading={loading} onPress={submit} /><Action secondary title="Já tenho conta" onPress={() => navigation.goBack()} /></AuthFrame>;
 }

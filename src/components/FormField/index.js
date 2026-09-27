@@ -7,10 +7,15 @@ export default function FormField({
   error,
   style,
   secureTextEntry,
+  variant,
+  onFocus,
+  onBlur,
   ...props
 }) {
   const [visible, setVisible] = useState(false);
-  return <View style={styles.wrap}>{label ? <Text style={styles.label}>{label}</Text> : null}<View><TextInput accessibilityLabel={label} placeholderTextColor="#8A94A2" secureTextEntry={secureTextEntry && !visible} style={[styles.input, error && styles.inputError, secureTextEntry && {
+  const [focused, setFocused] = useState(false);
+  const auth = variant === 'auth';
+  return <View style={styles.wrap}>{label ? <Text style={[styles.label, auth && styles.authLabel]}>{label}</Text> : null}<View style={auth && [styles.authShell, focused && styles.authFocused, error && styles.authError]}><TextInput accessibilityLabel={label} placeholderTextColor={auth ? "#737D89" : "#8A94A2"} secureTextEntry={secureTextEntry && !visible} onFocus={event => { setFocused(true); onFocus?.(event); }} onBlur={event => { setFocused(false); onBlur?.(event); }} style={[styles.input, auth && styles.authInput, error && styles.inputError, secureTextEntry && {
         paddingRight: 50
       }, style]} {...props} />{secureTextEntry && <Pressable accessibilityRole="button" accessibilityLabel={visible ? 'Ocultar senha' : 'Mostrar senha'} onPress={() => setVisible(v => !v)} style={{
         position: 'absolute',
