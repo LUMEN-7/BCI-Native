@@ -47,6 +47,8 @@ A proposta não é apenas reproduzir as telas do sistema web, mas adaptar seus p
 <a href="https://expo.dev/accounts/lana00713/projects/bci-mobile/builds/9fd57f03-051c-4db4-8606-48bf3f8c4834">
   <img src="https://raw.githubusercontent.com/LUMEN-7/images/refs/heads/main/button.png" alt="Download App" width="200"/>
 </a>
+
+
 ---
 ## Demonstração do aplicativo
 
